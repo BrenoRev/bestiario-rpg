@@ -50,3 +50,9 @@ Exemplos:
 - PR pequeno e focado. Mudança de padrão (nova dependência, nova regra) vem num PR separado, com o `CLAUDE.md` ou `.claude/rules/` atualizados.
 - Mudança visual leva print de antes e depois, no desktop e no celular.
 - Merge por **squash**, para cada PR virar um commit no padrão acima.
+
+## Publicação
+
+- **Mesclar na `main` é publicar em produção:** a Vercel publica o site e o workflow `deploy-supabase.yml` aplica as migrações e publica as Edge Functions, logo depois de o CI do commit passar.
+- Por isso só entra na `main` o que passou no CI e foi revisado. Migração aplicada em produção não volta atrás: a correção é uma migração nova.
+- Agentes não publicam à mão (`supabase db push`, `supabase functions deploy`, `vercel deploy`) nem disparam o workflow sem o usuário pedir.

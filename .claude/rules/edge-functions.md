@@ -60,7 +60,7 @@ serve(async (req) => {
 1. Pasta `supabase/functions/<nome>/index.ts` com o esqueleto acima.
 2. `[functions.<nome>] verify_jwt = true` em `supabase/config.toml`.
 3. Cliente em `src/lib/ai.ts` (ou equivalente em `src/lib/`), usando o `invoke` existente.
-4. Deploy documentado no README (`npx supabase functions deploy <nome>`).
+4. Nada a fazer para publicar: o workflow `deploy-supabase.yml` publica todas as funções quando o PR entra na `main`.
 
 ## Verificação
 
