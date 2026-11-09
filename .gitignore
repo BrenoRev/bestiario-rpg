@@ -7,3 +7,4 @@ supabase/.branches
 supabase/functions/.env
 *.tsbuildinfo
 .DS_Store
+supabase/snippets
