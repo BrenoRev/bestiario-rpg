@@ -2,21 +2,26 @@
 // devolve a ficha inteira atualizada a cada alteração.
 import { ArrowDown, ArrowUp, Calculator, Plus, Scale, Trash2, X } from "lucide-react";
 import type { ReactNode } from "react";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import {
   ABILITIES, ALIGNMENTS, CHALLENGE_RATINGS, CONDITIONS, CREATURE_TYPES, DAMAGE_TYPES, HABITATS, SIZES, SKILLS,
   abilityMod, averageFromDice, crGuide, proficiencyForCR, signed, suggestHitDice, xpForCR,
 } from "../../lib/dnd";
 import type { Ability, CreatureDraft, Entry, Speed } from "../../lib/types";
-import { Button, cx, IconButton, NumberInput, Select, TextArea, TextInput } from "../ui";
+import type { GlossaryKey } from "../../lib/glossary";
+import { HelpTip } from "../help/HelpTip";
+import { Button, cx, FieldLabel, IconButton, NumberInput, Select, TextArea, TextInput } from "../ui";
 
 type Patch = <K extends keyof CreatureDraft>(key: K, value: CreatureDraft[K]) => void;
 
-function Section({ title, description, children, tone = "mech" }: { title: string; description?: string; children: ReactNode; tone?: "mech" | "story" }) {
+function Section({ title, description, children, tone = "mech", help }: { title: string; description?: string; children: ReactNode; tone?: "mech" | "story"; help?: GlossaryKey }) {
   return (
     <section className={cx("rounded-[var(--radius-card)] border border-line p-5 sm:p-6", tone === "story" ? "bg-parchment" : "bg-cream shadow-[var(--shadow-soft)]")}>
       <div className="mb-4">
-        <h2 className="section-title">{title}</h2>
+        <div className="flex items-center gap-1.5">
+          <h2 className="section-title">{title}</h2>
+          {help && <HelpTip term={help} />}
+        </div>
         {description && <p className="mt-0.5 text-xs text-muted">{description}</p>}
       </div>
       {children}
@@ -25,7 +30,7 @@ function Section({ title, description, children, tone = "mech" }: { title: strin
 }
 
 // ---------------------------------------------------------------- Listas de traços/ações
-function EntryListEditor({ label, items, onChange, addLabel }: { label: string; items: Entry[]; onChange: (v: Entry[]) => void; addLabel: string }) {
+function EntryListEditor({ label, items, onChange, addLabel, help }: { label: string; items: Entry[]; onChange: (v: Entry[]) => void; addLabel: string; help?: GlossaryKey }) {
   const update = (i: number, patch: Partial<Entry>) => onChange(items.map((e, j) => (j === i ? { ...e, ...patch } : e)));
   const move = (i: number, dir: -1 | 1) => {
     const next = [...items];
@@ -37,7 +42,10 @@ function EntryListEditor({ label, items, onChange, addLabel }: { label: string; 
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <span className="label mb-0">{label}</span>
+        <span className="flex items-center gap-1">
+          <span className="label mb-0">{label}</span>
+          {help && <HelpTip term={help} />}
+        </span>
         <span className="text-xs text-muted">{items.length || "nenhum"}</span>
       </div>
       <div className="space-y-2.5">
@@ -45,7 +53,7 @@ function EntryListEditor({ label, items, onChange, addLabel }: { label: string; 
           <div key={i} className="rounded-lg border border-line bg-parchment/60 p-3">
             <div className="flex items-center gap-2">
               <input
-                className="field h-9 font-semibold"
+                className="field h-9 min-w-0 font-semibold"
                 placeholder="Nome (ex.: Mordida, Faro Aguçado)"
                 value={e.name}
                 onChange={(ev) => update(i, { name: ev.target.value })}
@@ -79,9 +87,10 @@ function EntryListEditor({ label, items, onChange, addLabel }: { label: string; 
 }
 
 // ---------------------------------------------------------------- Tags
-function TagInput({ label, values, onChange, suggestions }: { label: string; values: string[]; onChange: (v: string[]) => void; suggestions: string[] }) {
+function TagInput({ label, values, onChange, suggestions, help }: { label: string; values: string[]; onChange: (v: string[]) => void; suggestions: string[]; help?: GlossaryKey }) {
   const [draft, setDraft] = useState("");
   const listId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
   const add = (raw: string) => {
     const v = raw.trim();
     if (v && !values.includes(v)) onChange([...values, v]);
@@ -89,17 +98,26 @@ function TagInput({ label, values, onChange, suggestions }: { label: string; val
   };
   return (
     <div>
-      <span className="label">{label}</span>
-      <div className="field flex min-h-10 flex-wrap items-center gap-1.5 py-1.5">
+      <FieldLabel label={label} help={help} />
+      <div className="field flex min-h-10 cursor-text flex-wrap items-center gap-1.5 py-1.5" onClick={() => inputRef.current?.focus()}>
         {values.map((v) => (
           <span key={v} className="inline-flex items-center gap-1 rounded-md border border-line bg-sand/70 px-2 py-0.5 text-xs">
             {v}
-            <button type="button" aria-label={`Remover ${v}`} onClick={() => onChange(values.filter((x) => x !== v))} className="text-muted hover:text-wine cursor-pointer">
-              <X className="size-3" />
+            <button
+              type="button"
+              aria-label={`Remover ${v}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange(values.filter((x) => x !== v));
+              }}
+              className="-my-1 -mr-1.5 inline-flex size-7 items-center justify-center rounded text-muted hover:text-wine cursor-pointer"
+            >
+              <X className="size-3.5" />
             </button>
           </span>
         ))}
         <input
+          ref={inputRef}
           list={listId}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -113,7 +131,7 @@ function TagInput({ label, values, onChange, suggestions }: { label: string; val
           }}
           onBlur={() => draft && add(draft)}
           placeholder={values.length ? "" : "Digite e pressione Enter"}
-          className="min-w-32 flex-1 bg-transparent text-sm outline-none"
+          className="min-h-7 min-w-32 flex-1 bg-transparent text-sm outline-none"
           aria-label={label}
         />
         <datalist id={listId}>
@@ -162,23 +180,23 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
       <Section title="Informações gerais">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <TextInput label="Nome da criatura" required value={c.name} onChange={(e) => set("name", e.target.value)} wrapperClassName="sm:col-span-2 lg:col-span-3" maxLength={120} placeholder="Ex.: Espreitador das Raízes" />
-          <Select label="Tamanho" value={c.size} onChange={(e) => set("size", e.target.value as CreatureDraft["size"])}>
+          <Select label="Tamanho" help="tamanho" value={c.size} onChange={(e) => set("size", e.target.value as CreatureDraft["size"])}>
             {SIZES.map((s) => (
               <option key={s.value} value={s.value}>
                 {s.label}
               </option>
             ))}
           </Select>
-          <Select label="Tipo de criatura" value={c.creature_type} onChange={(e) => set("creature_type", e.target.value as CreatureDraft["creature_type"])}>
+          <Select label="Tipo de criatura" help="tipo" value={c.creature_type} onChange={(e) => set("creature_type", e.target.value as CreatureDraft["creature_type"])}>
             {CREATURE_TYPES.map((t) => (
               <option key={t.value} value={t.value}>
                 {t.label}
               </option>
             ))}
           </Select>
-          <TextInput label="Subtipo / etiquetas" value={c.subtype} onChange={(e) => set("subtype", e.target.value)} placeholder="Ex.: metamorfo" />
+          <TextInput label="Subtipo / etiquetas" help="subtipo" value={c.subtype} onChange={(e) => set("subtype", e.target.value)} placeholder="Ex.: metamorfo" />
           <div>
-            <TextInput label="Tendência" list="alignments" value={c.alignment} onChange={(e) => set("alignment", e.target.value)} placeholder="Ex.: neutro e mau" />
+            <TextInput label="Tendência" help="tendencia" list="alignments" value={c.alignment} onChange={(e) => set("alignment", e.target.value)} placeholder="Ex.: neutro e mau" />
             <datalist id="alignments">
               {ALIGNMENTS.map((a) => (
                 <option key={a} value={a} />
@@ -187,6 +205,7 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
           </div>
           <Select
             label="Nível de Desafio (ND)"
+            help="nd"
             value={c.challenge_rating}
             onChange={(e) => onChange({ ...c, challenge_rating: e.target.value, proficiency_bonus: proficiencyForCR(e.target.value) })}
             hint={`${xpForCR(c.challenge_rating).toLocaleString("pt-BR")} XP`}
@@ -197,7 +216,7 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
               </option>
             ))}
           </Select>
-          <NumberInput label="Bônus de Proficiência" value={c.proficiency_bonus} onValue={(n) => set("proficiency_bonus", n)} min={2} max={9} hint="Ajustado automaticamente pelo ND." />
+          <NumberInput label="Bônus de Proficiência" help="bonusProficiencia" value={c.proficiency_bonus} onValue={(n) => set("proficiency_bonus", n)} min={2} max={9} hint="Ajustado automaticamente pelo ND." />
         </div>
         {guide && (
           <div className="mt-4 flex gap-3 rounded-lg border border-line bg-parchment px-4 py-3 text-xs text-ink-soft">
@@ -210,7 +229,7 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
       </Section>
 
       {/* ------------------------------------------------ Atributos */}
-      <Section title="Atributos">
+      <Section title="Atributos" help="atributos" description="Notas de 1 a 30; 10 é a média humana. O número embaixo é o modificador usado nas jogadas.">
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
           {ABILITIES.map((a) => (
             <div key={a.value} className="rounded-lg border border-line bg-parchment/70 p-2.5 text-center">
@@ -235,11 +254,12 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
       {/* ------------------------------------------------ Combate */}
       <Section title="Estatísticas de combate">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <NumberInput label="Classe de Armadura (CA)" value={c.armor_class} onValue={(n) => set("armor_class", n)} min={1} max={30} />
+          <NumberInput label="Classe de Armadura (CA)" help="ca" value={c.armor_class} onValue={(n) => set("armor_class", n)} min={1} max={30} />
           <TextInput label="Origem da CA" value={c.armor_note} onChange={(e) => set("armor_note", e.target.value)} placeholder="Ex.: armadura natural" />
-          <NumberInput label="Pontos de Vida (PV)" value={c.hit_points} onValue={(n) => set("hit_points", n)} min={1} />
+          <NumberInput label="Pontos de Vida (PV)" help="pv" value={c.hit_points} onValue={(n) => set("hit_points", n)} min={1} />
           <TextInput
             label="Dados de Vida"
+            help="dadosVida"
             value={c.hit_dice}
             onChange={(e) => set("hit_dice", e.target.value)}
             placeholder="Ex.: 8d10 + 16"
@@ -256,7 +276,7 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
         </div>
 
         <div className="mt-5">
-          <span className="label">Deslocamento (em pés; 30 pés = 9 m)</span>
+          <FieldLabel label="Deslocamento (em pés; 30 pés = 9 m)" help="deslocamento" />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             {(
               [
@@ -270,7 +290,7 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
               <NumberInput key={key} label={label} value={c.speed[key]} onValue={(n) => setSpeed(key, Math.max(0, n))} min={0} step={5} />
             ))}
           </div>
-          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-sm text-ink-soft">
+          <label className="mt-2 inline-flex min-h-9 cursor-pointer items-center gap-2 text-sm text-ink-soft">
             <input type="checkbox" className="accent-wine" checked={c.speed.hover} onChange={(e) => setSpeed("hover", e.target.checked)} />
             Pode pairar
           </label>
@@ -280,13 +300,13 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
       {/* ------------------------------------------------ Resistências */}
       <Section title="Resistências e vulnerabilidades" description="Testes de resistência, perícias, defesas, sentidos e idiomas.">
         <div>
-          <span className="label">Testes de resistência (marque as proficiências)</span>
+          <FieldLabel label="Testes de resistência (marque os pontos fortes)" help="testesResistencia" />
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
             {ABILITIES.map((a) => {
               const save = c.saving_throws.find((s) => s.ability === a.value);
               return (
-                <div key={a.value} className={cx("rounded-lg border p-2", save ? "border-wine-line bg-wine-soft/60" : "border-line bg-parchment/60")}>
-                  <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
+                <div key={a.value} className={cx("rounded-lg border", save ? "border-wine-line bg-wine-soft/60" : "border-line bg-parchment/60")}>
+                  <label className="flex min-h-10 cursor-pointer items-center gap-2 px-2 text-sm font-semibold">
                     <input type="checkbox" className="accent-wine" checked={!!save} onChange={() => toggleSave(a.value)} />
                     {a.short}
                   </label>
@@ -301,7 +321,7 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
                           c.saving_throws.map((s) => (s.ability === a.value ? { ...s, bonus: Number(e.target.value) } : s)),
                         )
                       }
-                      className="mt-1.5 w-full rounded-md border border-line bg-cream px-2 py-1 text-sm tabular-nums"
+                      className="mx-2 mb-2 w-[calc(100%-1rem)] rounded-md border border-line bg-cream px-2 py-1.5 text-sm tabular-nums"
                     />
                   )}
                 </div>
@@ -312,7 +332,10 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
 
         <div className="mt-5">
           <div className="mb-2 flex items-center justify-between">
-            <span className="label mb-0">Perícias</span>
+            <span className="flex items-center gap-1">
+              <span className="label mb-0">Perícias</span>
+              <HelpTip term="pericias" />
+            </span>
             {c.skills.length > 0 && (
               <Button size="sm" variant="ghost" icon={<Calculator className="size-4" />} onClick={recalcSkills}>
                 Recalcular bônus
@@ -362,25 +385,26 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
         </div>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <TagInput label="Vulnerabilidades a dano" values={c.damage_vulnerabilities} onChange={(v) => set("damage_vulnerabilities", v)} suggestions={DAMAGE_TYPES} />
-          <TagInput label="Resistências a dano" values={c.damage_resistances} onChange={(v) => set("damage_resistances", v)} suggestions={DAMAGE_TYPES} />
-          <TagInput label="Imunidades a dano" values={c.damage_immunities} onChange={(v) => set("damage_immunities", v)} suggestions={DAMAGE_TYPES} />
-          <TagInput label="Imunidades a condições" values={c.condition_immunities} onChange={(v) => set("condition_immunities", v)} suggestions={CONDITIONS} />
-          <TextInput label="Sentidos" value={c.senses} onChange={(e) => set("senses", e.target.value)} placeholder="Ex.: visão no escuro 18 m, Percepção passiva 14" />
-          <TextInput label="Idiomas" value={c.languages} onChange={(e) => set("languages", e.target.value)} placeholder="Ex.: Comum, Silvestre; telepatia 18 m" />
+          <TagInput help="danos" label="Vulnerabilidades a dano" values={c.damage_vulnerabilities} onChange={(v) => set("damage_vulnerabilities", v)} suggestions={DAMAGE_TYPES} />
+          <TagInput help="danos" label="Resistências a dano" values={c.damage_resistances} onChange={(v) => set("damage_resistances", v)} suggestions={DAMAGE_TYPES} />
+          <TagInput help="danos" label="Imunidades a dano" values={c.damage_immunities} onChange={(v) => set("damage_immunities", v)} suggestions={DAMAGE_TYPES} />
+          <TagInput help="condicoes" label="Imunidades a condições" values={c.condition_immunities} onChange={(v) => set("condition_immunities", v)} suggestions={CONDITIONS} />
+          <TextInput label="Sentidos" help="sentidos" value={c.senses} onChange={(e) => set("senses", e.target.value)} placeholder="Ex.: visão no escuro 18 m, Percepção passiva 14" />
+          <TextInput label="Idiomas" help="idiomas" value={c.languages} onChange={(e) => set("languages", e.target.value)} placeholder="Ex.: Comum, Silvestre; telepatia 18 m" />
         </div>
       </Section>
 
       {/* ------------------------------------------------ Características */}
       <Section title="Características especiais" description="Traços passivos, ações e habilidades no formato dos livros de D&D.">
         <div className="space-y-6">
-          <EntryListEditor label="Traços passivos" items={c.traits} onChange={(v) => set("traits", v)} addLabel="Adicionar traço" />
-          <EntryListEditor label="Ações" items={c.actions} onChange={(v) => set("actions", v)} addLabel="Adicionar ação" />
-          <EntryListEditor label="Ações bônus" items={c.bonus_actions} onChange={(v) => set("bonus_actions", v)} addLabel="Adicionar ação bônus" />
-          <EntryListEditor label="Reações" items={c.reactions} onChange={(v) => set("reactions", v)} addLabel="Adicionar reação" />
+          <EntryListEditor help="tracos" label="Traços passivos" items={c.traits} onChange={(v) => set("traits", v)} addLabel="Adicionar traço" />
+          <EntryListEditor help="acoes" label="Ações" items={c.actions} onChange={(v) => set("actions", v)} addLabel="Adicionar ação" />
+          <EntryListEditor help="acoesBonus" label="Ações bônus" items={c.bonus_actions} onChange={(v) => set("bonus_actions", v)} addLabel="Adicionar ação bônus" />
+          <EntryListEditor help="reacoes" label="Reações" items={c.reactions} onChange={(v) => set("reactions", v)} addLabel="Adicionar reação" />
           <div className="rounded-lg border border-dashed border-line-strong p-4">
             <TextArea
-              label="Ações lendárias (quando aplicável)"
+              label="Ações lendárias (só para criaturas muito poderosas)"
+              help="acoesLendarias"
               value={c.legendary_description}
               onChange={(e) => set("legendary_description", e.target.value)}
               className="min-h-16"
@@ -390,14 +414,14 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
               <EntryListEditor label="Opções de ação lendária" items={c.legendary_actions} onChange={(v) => set("legendary_actions", v)} addLabel="Adicionar ação lendária" />
             </div>
           </div>
-          <EntryListEditor label="Habilidades especiais" items={c.special_abilities} onChange={(v) => set("special_abilities", v)} addLabel="Adicionar habilidade especial" />
+          <EntryListEditor help="habilidadesEspeciais" label="Habilidades especiais" items={c.special_abilities} onChange={(v) => set("special_abilities", v)} addLabel="Adicionar habilidade especial" />
         </div>
       </Section>
 
       {/* ------------------------------------------------ Narrativa */}
       <Section title="Descrição narrativa" tone="story" description="A crônica da criatura: o que os jogadores veem, ouvem e descobrem.">
         <div className="mb-4">
-          <span className="label">Ambientes</span>
+          <FieldLabel label="Ambientes" help="ambientes" />
           <div className="flex flex-wrap gap-1.5">
             {HABITATS.map((h) => {
               const on = c.habitat_tags.includes(h.value);
@@ -408,7 +432,7 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
                   aria-pressed={on}
                   onClick={() => set("habitat_tags", on ? c.habitat_tags.filter((x) => x !== h.value) : [...c.habitat_tags, h.value])}
                   className={cx(
-                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer",
+                    "min-h-9 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer",
                     on ? "border-moss bg-moss-soft text-moss" : "border-line bg-cream text-muted hover:text-ink",
                   )}
                 >

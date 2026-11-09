@@ -134,6 +134,10 @@ export interface Preferences {
   detail?: Detail;
   alternatives?: number;
   useUniverseContext?: boolean;
+  /** O guia de boas-vindas já foi visto (não abre sozinho de novo). */
+  onboardingDone?: boolean;
+  /** Mostrar os ícones de ajuda (?) ao lado dos termos. Padrão: sim. */
+  showHelp?: boolean;
 }
 
 export interface Profile {

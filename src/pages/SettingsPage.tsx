@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { LogOut, Save, ShieldCheck } from "lucide-react";
+import { BookOpen, Compass, LogOut, Save, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Avatar } from "../components/brand";
 import { CREATIVITY_OPTIONS, DETAIL_OPTIONS } from "../components/creature/AIAssist";
@@ -7,6 +7,7 @@ import { ConfirmDialog } from "../components/Modal";
 import { errorMessage, useToast } from "../components/Toast";
 import { Button, PageHeader, PageLoader, Segmented, Select, TextInput, Toggle } from "../components/ui";
 import { useAuth } from "../context/AuthContext";
+import { useHelp } from "../context/HelpContext";
 import { keys, useProfile } from "../hooks/queries";
 import { updateProfile } from "../lib/api";
 import type { Preferences } from "../lib/types";
@@ -17,9 +18,10 @@ export function SettingsPage() {
   const qc = useQueryClient();
   const toast = useToast();
   const [name, setName] = useState("");
-  const [prefs, setPrefs] = useState<Required<Preferences>>({ creativity: "equilibrado", detail: "padrao", alternatives: 2, useUniverseContext: true });
+  const [prefs, setPrefs] = useState<Required<Preferences>>({ creativity: "equilibrado", detail: "padrao", alternatives: 2, useUniverseContext: true, onboardingDone: false, showHelp: true });
   const [saving, setSaving] = useState(false);
   const [confirmOut, setConfirmOut] = useState(false);
+  const { openGuide, openGlossary } = useHelp();
 
   useEffect(() => {
     if (!profile) return;
@@ -57,7 +59,7 @@ export function SettingsPage() {
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="card p-5 sm:p-6">
+        <section className="card min-w-0 p-5 sm:p-6">
           <h2 className="section-title mb-4">Conta</h2>
           <div className="mb-5 flex items-center gap-4">
             <Avatar url={profile?.avatar_url ?? (user?.user_metadata?.avatar_url as string | undefined)} name={name || user?.email} className="size-14" />
@@ -78,7 +80,7 @@ export function SettingsPage() {
           </Button>
         </section>
 
-        <section className="card p-5 sm:p-6">
+        <section className="card min-w-0 p-5 sm:p-6">
           <h2 className="section-title mb-1">Assistente de IA</h2>
           <p className="mb-5 text-xs text-muted">Valores iniciais em “Criar com IA”. Você pode mudá-los a cada pedido.</p>
           <div className="space-y-5">
@@ -95,6 +97,26 @@ export function SettingsPage() {
               label="Usar contexto do universo por padrão"
               description="A IA considera ambientação, época, nível de fantasia e regras do mundo."
             />
+          </div>
+        </section>
+        <section className="card min-w-0 p-5 sm:p-6 lg:col-span-2">
+          <h2 className="section-title mb-1">Ajuda</h2>
+          <p className="mb-5 text-xs text-muted">Para quem está começando no RPG. Quem já conhece D&amp;D pode esconder as dicas.</p>
+          <div className="space-y-5">
+            <Toggle
+              checked={prefs.showHelp}
+              onChange={(v) => setPref("showHelp", v)}
+              label="Mostrar ícones de ajuda (?) nos campos"
+              description="Explicam termos como ND, CA e PV em linguagem simples. Vale depois de salvar."
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button icon={<Compass className="size-4" />} onClick={openGuide}>
+                Rever o guia de boas-vindas
+              </Button>
+              <Button icon={<BookOpen className="size-4" />} onClick={() => openGlossary()}>
+                Abrir o glossário
+              </Button>
+            </div>
           </div>
         </section>
       </div>

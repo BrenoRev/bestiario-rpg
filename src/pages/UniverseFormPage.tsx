@@ -74,7 +74,7 @@ export function UniverseFormPage() {
 
   return (
     <form onSubmit={save}>
-      <Link to={editing ? `/mundos/${universeId}` : "/"} className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
+      <Link to={editing ? `/mundos/${universeId}` : "/"} className="mb-2 -ml-1 inline-flex min-h-9 items-center gap-1.5 px-1 text-sm text-muted hover:text-ink">
         <ArrowLeft className="size-4" /> Voltar
       </Link>
       <PageHeader

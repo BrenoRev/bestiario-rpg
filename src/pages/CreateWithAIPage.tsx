@@ -14,10 +14,12 @@ import { Narrative, StatBlock } from "../components/creature/StatBlock";
 import { errorMessage, useToast } from "../components/Toast";
 import { Button, cx, EmptyState, PageHeader, PageLoader, Segmented, Select, TextArea, Toggle } from "../components/ui";
 import { useAuth } from "../context/AuthContext";
+import { useHelp } from "../context/HelpContext";
 import { useCurrentUniverse } from "../context/UniverseContext";
 import { keys, useProfile } from "../hooks/queries";
 import { generateCreatures } from "../lib/ai";
 import { attachImagesToCreature, cleanupOrphanImages, createCreature, deleteDraftImages } from "../lib/api";
+import { normalizeDraft } from "../lib/creature";
 import { CHALLENGE_RATINGS, CREATURE_TYPES } from "../lib/dnd";
 import type { AIAlternative, CreatureImage, Creativity, Detail } from "../lib/types";
 
@@ -41,10 +43,39 @@ const EXAMPLES = [
 const newKey = () => crypto.randomUUID();
 const storageKey = (uid: string) => `bestiario:criar:${uid}`;
 
-function loadSession(uid: string | undefined): { settings?: Settings; proposals?: Proposal[]; active?: number; universeId?: string } {
+/**
+ * Restaura a sessão salva no navegador. Tudo passa por normalização: uma sessão gravada
+ * por uma versão anterior do app (campos faltando ou a mais) não pode derrubar a tela.
+ */
+function loadSession(uid: string | undefined): { settings?: Settings; proposals?: Proposal[]; active?: number } {
   if (!uid) return {};
   try {
-    return JSON.parse(sessionStorage.getItem(storageKey(uid)) ?? "{}");
+    const raw = JSON.parse(sessionStorage.getItem(storageKey(uid)) ?? "{}") as Record<string, unknown>;
+    const str = (v: unknown) => (typeof v === "string" ? v : "");
+    const proposals: Proposal[] = (Array.isArray(raw.proposals) ? raw.proposals : [])
+      .filter((p): p is Record<string, unknown> => !!p && typeof p === "object")
+      .map((p) => ({
+        key: str(p.key) || newKey(),
+        concept: str(p.concept),
+        design_notes: str(p.design_notes),
+        creature: normalizeDraft(p.creature),
+        images: Array.isArray(p.images) ? (p.images as CreatureImage[]).filter((i) => i && typeof i.path === "string") : [],
+        savedId: str(p.savedId) || undefined,
+      }));
+    const s = (raw.settings ?? {}) as Partial<Settings>;
+    const settings: Settings | undefined = raw.settings
+      ? {
+          description: str(s.description),
+          creatureType: str(s.creatureType),
+          challengeRating: str(s.challengeRating),
+          creativity: CREATIVITY_OPTIONS.some((o) => o.value === s.creativity) ? (s.creativity as Creativity) : "equilibrado",
+          detail: DETAIL_OPTIONS.some((o) => o.value === s.detail) ? (s.detail as Detail) : "padrao",
+          count: [1, 2, 3].includes(Number(s.count)) ? Number(s.count) : 2,
+          useContext: s.useContext !== false,
+        }
+      : undefined;
+    const active = Math.min(Math.max(0, Number(raw.active) || 0), Math.max(0, proposals.length - 1));
+    return { settings, proposals, active };
   } catch {
     return {};
   }
@@ -54,6 +85,7 @@ export function CreateWithAIPage() {
   const { user } = useAuth();
   const { current, universes, setCurrentId, loading } = useCurrentUniverse();
   const { data: profile } = useProfile();
+  const { showHelp } = useHelp();
   const toast = useToast();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -212,6 +244,7 @@ export function CreateWithAIPage() {
     <section className="card p-5 sm:p-6">
       <TextArea
         label="Descreva a criatura que você imagina"
+        hint="Escreva com as suas palavras: aparência, onde vive, o que faz. Não precisa saber as regras do jogo."
         value={settings.description}
         onChange={(e) => set("description", e.target.value)}
         placeholder={EXAMPLES[0]}
@@ -244,7 +277,7 @@ export function CreateWithAIPage() {
             </option>
           ))}
         </Select>
-        <Select label="Tipo de criatura" value={settings.creatureType} onChange={(e) => set("creatureType", e.target.value)} disabled={generating}>
+        <Select label="Tipo de criatura" help="tipo" value={settings.creatureType} onChange={(e) => set("creatureType", e.target.value)} disabled={generating}>
           <option value="">Deixar a IA decidir</option>
           {CREATURE_TYPES.map((t) => (
             <option key={t.value} value={t.value}>
@@ -252,7 +285,7 @@ export function CreateWithAIPage() {
             </option>
           ))}
         </Select>
-        <Select label="Nível de desafio desejado" value={settings.challengeRating} onChange={(e) => set("challengeRating", e.target.value)} disabled={generating}>
+        <Select label="Nível de desafio desejado" help="nd" value={settings.challengeRating} onChange={(e) => set("challengeRating", e.target.value)} disabled={generating}>
           <option value="">Deixar a IA decidir</option>
           {CHALLENGE_RATINGS.map((cr) => (
             <option key={cr} value={cr}>
@@ -260,21 +293,22 @@ export function CreateWithAIPage() {
             </option>
           ))}
         </Select>
-        <Select label="Alternativas" value={String(settings.count)} onChange={(e) => set("count", Number(e.target.value))} disabled={generating}>
+        <Select label="Alternativas" help="propostas" value={String(settings.count)} onChange={(e) => set("count", Number(e.target.value))} disabled={generating}>
           <option value="1">1 proposta</option>
           <option value="2">2 propostas</option>
           <option value="3">3 propostas</option>
         </Select>
       </div>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <Segmented label="Nível de criatividade" value={settings.creativity} onChange={(v) => set("creativity", v)} options={CREATIVITY_OPTIONS} />
-        <Segmented label="Nível de detalhamento" value={settings.detail} onChange={(v) => set("detail", v)} options={DETAIL_OPTIONS} />
+        <Segmented label="Nível de criatividade" help="criatividade" value={settings.creativity} onChange={(v) => set("creativity", v)} options={CREATIVITY_OPTIONS} />
+        <Segmented label="Nível de detalhamento" help="detalhamento" value={settings.detail} onChange={(v) => set("detail", v)} options={DETAIL_OPTIONS} />
       </div>
       <div className="mt-5 flex flex-col gap-4 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
         <Toggle
           checked={settings.useContext}
           onChange={(v) => set("useContext", v)}
           label={`Usar contexto de “${current.name}”`}
+          help="contextoUniverso"
           description="Ambientação, época, nível de fantasia e regras do universo."
         />
         <Button variant="primary" icon={<Sparkles className="size-4" />} onClick={() => generate("replace")} loading={generating} className="h-11 px-6">
@@ -303,7 +337,7 @@ export function CreateWithAIPage() {
           <p className="line-clamp-2 flex-1 text-sm text-ink-soft">
             <span className="font-semibold text-ink">Sua ideia:</span> {settings.description}
           </p>
-          <div className="flex shrink-0 gap-2">
+          <div className="flex flex-wrap gap-2 sm:shrink-0">
             <Button size="sm" icon={<ChevronDown className="size-4" />} onClick={() => setFormOpen(true)}>
               Editar pedido
             </Button>
@@ -314,6 +348,7 @@ export function CreateWithAIPage() {
         </div>
       ) : (
         <div className="mb-6">
+          {proposals.length === 0 && showHelp && <HowItWorks />}
           {form}
           {proposals.length > 0 && (
             <div className="mt-2 flex justify-end">
@@ -413,7 +448,7 @@ export function CreateWithAIPage() {
               <StatBlock creature={proposal.creature} />
               <Narrative creature={proposal.creature} showNotes={false} />
             </div>
-            <div className="lg:sticky lg:top-24 lg:self-start">
+            <div className="side-panel">
               <ImageStudio
                 key={proposal.key}
                 universeId={universeId}
@@ -461,5 +496,32 @@ export function CreateWithAIPage() {
         </>
       )}
     </>
+  );
+}
+
+// ---------------------------------------------------------------- Como funciona
+const HOW_STEPS = [
+  { icon: PenLine, title: "Descreva a ideia", text: "Com as suas palavras, como contaria a um amigo." },
+  { icon: Sparkles, title: "A IA propõe fichas", text: "Números do jogo e história, prontos para usar." },
+  { icon: BookPlus, title: "Você decide", text: "Ajuste, combine ou descarte. Só entra no bestiário o que você salvar." },
+];
+
+function HowItWorks() {
+  return (
+    <ol className="mb-5 grid gap-3 sm:grid-cols-3" aria-label="Como funciona">
+      {HOW_STEPS.map(({ icon: Icon, title, text }, i) => (
+        <li key={title} className="flex gap-3 rounded-[var(--radius-card)] border border-line bg-parchment p-4">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-wine-line bg-wine-soft text-wine">
+            <Icon className="size-4" />
+          </span>
+          <div>
+            <div className="font-display text-lg leading-tight font-semibold">
+              {i + 1}. {title}
+            </div>
+            <p className="mt-0.5 text-xs leading-relaxed text-muted">{text}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
   );
 }

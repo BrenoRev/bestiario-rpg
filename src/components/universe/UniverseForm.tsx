@@ -58,6 +58,7 @@ export function UniverseForm({ value, onChange, coverFile, onCoverFile }: Props)
           <TextInput label="Época ou período histórico" value={value.era} onChange={(e) => set("era", e.target.value)} placeholder="Ex.: Era das Cinzas, 300 anos após a Queda" />
           <Segmented
             label="Nível de fantasia"
+            help="nivelFantasia"
             value={value.fantasy_level}
             onChange={(v) => set("fantasy_level", v)}
             options={[
@@ -68,12 +69,14 @@ export function UniverseForm({ value, onChange, coverFile, onCoverFile }: Props)
           />
           <TextArea
             label="Regras ou características particulares"
+            help="regrasUniverso"
             value={value.rules}
             onChange={(e) => set("rules", e.target.value)}
             placeholder="Ex.: a magia arcana corrompe quem a usa; não existem dragões; mortos-vivos se erguem em noites sem lua."
           />
           <TextArea
             label="Estilo visual das ilustrações"
+            help="estiloVisual"
             value={value.art_style}
             onChange={(e) => set("art_style", e.target.value)}
             className="min-h-16"

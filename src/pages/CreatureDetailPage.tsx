@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Copy, GitBranch, Pencil, Sparkles, Trash2 } from "lucide-react";
+import { BookOpen, ChevronRight, Copy, GitBranch, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { AIAssistModal, VariationsModal } from "../components/creature/AIAssist";
@@ -8,6 +8,7 @@ import { Narrative, StatBlock } from "../components/creature/StatBlock";
 import { ConfirmDialog } from "../components/Modal";
 import { errorMessage, useToast } from "../components/Toast";
 import { Button, ErrorState, PageLoader } from "../components/ui";
+import { useHelp } from "../context/HelpContext";
 import { useCurrentUniverse } from "../context/UniverseContext";
 import { keys, useCreature } from "../hooks/queries";
 import { createCreature, deleteCreature, duplicateCreature, updateCreature } from "../lib/api";
@@ -18,6 +19,7 @@ export function CreatureDetailPage() {
   const { creatureId } = useParams();
   const { data: creature, isLoading, isError } = useCreature(creatureId);
   const { universes, setCurrentId } = useCurrentUniverse();
+  const { showHelp, openGlossary } = useHelp();
   const navigate = useNavigate();
   const toast = useToast();
   const qc = useQueryClient();
@@ -79,16 +81,16 @@ export function CreatureDetailPage() {
 
   return (
     <>
-      <nav className="mb-4 flex items-center gap-1 text-sm text-muted" aria-label="Trilha">
-        <Link to={`/mundos/${creature.universe_id}`} className="hover:text-ink">
+      <nav className="mb-4 flex min-w-0 items-center gap-1 text-sm text-muted" aria-label="Trilha">
+        <Link to={`/mundos/${creature.universe_id}`} className="max-w-[40%] truncate hover:text-ink" title={universe?.name}>
           {universe?.name ?? "Universo"}
         </Link>
-        <ChevronRight className="size-3.5" />
-        <Link to="/criaturas" className="hover:text-ink">
+        <ChevronRight className="size-3.5 shrink-0" />
+        <Link to="/criaturas" className="shrink-0 hover:text-ink">
           Criaturas
         </Link>
-        <ChevronRight className="size-3.5" />
-        <span className="truncate text-ink-soft">{creature.name}</span>
+        <ChevronRight className="size-3.5 shrink-0" />
+        <span className="min-w-0 truncate text-ink-soft">{creature.name}</span>
       </nav>
 
       <div className="mb-6 flex flex-wrap gap-2">
@@ -107,6 +109,11 @@ export function CreatureDetailPage() {
         <Button variant="danger" icon={<Trash2 className="size-4" />} onClick={() => setConfirmDelete(true)}>
           Excluir
         </Button>
+        {showHelp && (
+          <Button variant="ghost" icon={<BookOpen className="size-4" />} onClick={() => openGlossary("nd")}>
+            Como ler esta ficha?
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
@@ -114,7 +121,7 @@ export function CreatureDetailPage() {
           <StatBlock creature={draft} />
           <Narrative creature={draft} />
         </div>
-        <div className="lg:sticky lg:top-24 lg:self-start">
+        <div className="side-panel order-first lg:order-none">
           <ImageStudio
             universeId={creature.universe_id}
             creatureId={creature.id}

@@ -125,9 +125,32 @@
     padding-bottom: 0.15rem;
     margin: 1rem 0 0.5rem;
   }
+  /* Painel lateral fixo (imagem, universo…). No desktop acompanha a página e, se for
+     mais alto que a janela, rola por conta própria em vez de esperar o fim da página.
+     --side-panel-offset = espaço ocupado por topo e barras fixas (padrão: topo de 6rem + folga). */
+  .side-panel {
+    @media (min-width: 64rem) {
+      position: sticky;
+      top: 6rem;
+      align-self: start;
+      max-height: calc(100dvh - var(--side-panel-offset, 7.5rem));
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      /* folga para a sombra e o anel de foco não serem cortados pela rolagem */
+      padding: 0.25rem;
+      margin: -0.25rem;
+    }
+  }
   .prose-sheet p + p {
     margin-top: 0.6rem;
   }
+}
+
+/* Botão nativo de limpar a busca nas cores do tema (o padrão do navegador é azul) */
+input[type="search"]::-webkit-search-cancel-button {
+  filter: grayscale(1) sepia(0.6);
+  opacity: 0.6;
+  cursor: pointer;
 }
 
 /* Barras de rolagem discretas */
