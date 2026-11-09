@@ -46,7 +46,7 @@ export function WorldsPage() {
         <EmptyState
           icon={<Globe2 className="size-6" />}
           title="Nenhum mundo por aqui ainda"
-          description="Comece criando o universo da sua campanha: ambientação, época e regras. Depois, povoe-o de criaturas."
+          description="Um universo é o mundo da sua história: um reino medieval, uma estação espacial, uma cidade assombrada. Crie o primeiro e depois povoe-o de criaturas, à mão ou com a ajuda da IA."
           action={
             <Link to="/mundos/novo">
               <Button variant="primary" icon={<Plus className="size-4" />}>

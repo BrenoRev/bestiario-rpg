@@ -15,6 +15,8 @@ Plataforma web para mestres de RPG criarem e organizarem bestiários por univers
 - **Criar, editar, duplicar e excluir** fichas, com confirmação e aviso de alterações não salvas.
 - **Criar com IA**: descrição livre e configurações (tipo, ND, criatividade, detalhamento, número de propostas, contexto do universo). As propostas aparecem em abas e podem ser salvas, descartadas, combinadas campo a campo, modificadas, editadas à mão, ilustradas, ou virar base de novas alternativas e variações.
 - **IA dentro da ficha**: pedidos rápidos ou pedido livre com foco num campo. Toda sugestão chega como **diferença campo a campo**, e o mestre escolhe o que aplicar.
+- **Feito também para quem não conhece RPG**: guia de boas-vindas na primeira visita, ícones "?" que explicam cada termo (ND, CA, PV, atributos…) em linguagem simples, glossário pesquisável e dicas para iniciantes. Quem já conhece D&D pode esconder as dicas nas Configurações.
+- **Responsivo**: todas as telas funcionam a partir de 360 px de largura.
 - **Ilustrações por IA**, só quando pedidas: gerar, novas versões, alterações por texto (inclusive editando a imagem atual), comparar, aceitar, substituir, remover ou enviar a própria imagem.
 
 ## Arquitetura

@@ -8,3 +8,4 @@ supabase/functions/.env
 *.tsbuildinfo
 .DS_Store
 supabase/snippets
+.claude/worktrees/

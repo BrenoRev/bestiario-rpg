@@ -88,5 +88,5 @@ const save = async () => {
 
 ## Estado
 
-- Estado do servidor: TanStack Query. Estado da tela: `useState`. Estado compartilhado: só `AuthContext` e `UniverseContext`; contexto novo só com pedido.
-- `localStorage`/`sessionStorage` só para conveniência (último universo, rascunho de "Criar com IA"), sempre em `try/catch`, com chave `bestiario:<recurso>:<user_id>`. O que precisa persistir vai para o banco (ex.: preferências em `profiles.preferences`).
+- Estado do servidor: TanStack Query. Estado da tela: `useState`. Estado compartilhado: só `AuthContext`, `UniverseContext` e `HelpContext` (guia, glossário e preferência de dicas); contexto novo só com pedido.
+- `localStorage`/`sessionStorage` só para conveniência (último universo, rascunho de "Criar com IA"), sempre em `try/catch`, com chave `bestiario:<recurso>:<user_id>`. O que é lido de volta passa por normalização campo a campo (veja `loadSession` em `CreateWithAIPage` e `normalizeDraft`): uma sessão gravada por versão antiga do app não pode derrubar a tela. O que precisa persistir vai para o banco (ex.: preferências em `profiles.preferences`).

@@ -41,6 +41,21 @@ Identidade: bestiário antigo, mas limpo e legível. Papel envelhecido, pergamin
 - Parte **mecânica** em `.card` (creme), com `stat-rule` entre blocos e `stat-heading` para Ações, Reações etc.
 - Parte **narrativa** ("Crônica") em `bg-parchment`. Mantenha essa separação em qualquer tela nova da ficha.
 
+## Ajuda para quem não conhece RPG
+
+- O público inclui quem nunca jogou RPG. Todo termo técnico novo na interface (de D&D ou do app) ganha uma entrada em `src/lib/glossary.ts`, em linguagem simples e com exemplo quando ajudar.
+- Mostre a explicação com a prop `help="<chave>"` dos primitivos (`TextInput`, `NumberInput`, `TextArea`, `Select`, `Segmented`, `Toggle`), com `FieldLabel` em rótulos montados à mão, ou com `<HelpTip term=…>` ao lado de títulos. Nunca ponha o ícone dentro de um `<label>`.
+- O guia de boas-vindas (`WelcomeGuide`) e o glossário (`GlossaryDialog`) abrem pelo `useHelp()`. Conteúdo de ajuda novo segue o tom do guia: frases curtas, “você”, sem jargão.
+- Dicas extras na tela (avisos de “Primeira vez?”, “Como funciona”) só aparecem com `showHelp` ligado; quem já conhece D&D pode desligá-las nas Configurações.
+
+## Celular
+
+- Teste toda tela a **360 px** de largura: sem rolagem horizontal e sem elemento vazando.
+- Alvos de toque com pelo menos 36 px (`min-h-9`/`size-9`); `IconButton` não encolhe (`shrink-0`). Campos de texto livre ao lado de botões levam `min-w-0`.
+- Filhos de grade e flex que contêm texto ou controles largos levam `min-w-0` (sem isso o conteúdo força a largura da página).
+- Barras fixas com vários botões precisam caber a 360 px: ícone sem texto no celular (`<span className="hidden sm:inline">`) com `aria-label`.
+- O que importa primeiro no celular vem primeiro no DOM ou com `order-first lg:order-none` (ex.: ilustração na ficha, universo ao criar criatura).
+
 ## Ícones, layout e acessibilidade
 
 - Ícones só do `lucide-react`: `size-4` em botões, `size-[1.1rem]` na navegação, `size-6` em estados vazios.

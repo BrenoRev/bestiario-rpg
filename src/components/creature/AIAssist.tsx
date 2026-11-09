@@ -228,7 +228,7 @@ export function AIAssistModal({ open, onClose, creature, universeId, onApply, in
                     setInstruction(p.prompt);
                     void run(p.prompt);
                   }}
-                  className="rounded-full border border-line bg-parchment px-3 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:border-wine-line hover:bg-wine-soft hover:text-wine cursor-pointer disabled:opacity-50"
+                  className="min-h-9 rounded-full border border-line bg-parchment px-3 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:border-wine-line hover:bg-wine-soft hover:text-wine cursor-pointer disabled:opacity-50"
                 >
                   {p.label}
                 </button>

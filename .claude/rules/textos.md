@@ -14,6 +14,7 @@ Vale para todo o repositório.
 - Fale com o usuário por **você**, de forma direta e cordial. Ele é o **mestre**; os mundos são **universos**; as fichas são **criaturas**; o conjunto é o **bestiário**.
 - A IA é apresentada como assistente que **sugere** e **propõe**. Nunca escreva que a IA "cria a criatura definitiva" ou "decide".
 - Sem jargão técnico na interface (nada de "RLS", "JWT", "Edge Function", "storage").
+- Termos de RPG podem aparecer (são o vocabulário do produto), mas sempre com explicação disponível pelo glossário (`src/lib/glossary.ts`). Quem nunca jogou RPG precisa conseguir usar o app.
 
 ## Formas
 
