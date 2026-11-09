@@ -30,11 +30,13 @@ paths:
 
 ## No servidor
 
-- Provedor único: **OpenAI**. Toda chamada passa por `supabase/functions/_shared/openai.ts`; não chame a API em outro lugar nem adicione outro provedor sem pedido.
+- Provedor padrão: **OpenAI** (`_shared/openai.ts`), para texto e imagem.
+- **Anthropic temporária** (`_shared/anthropic.ts`): só para texto, enquanto não há `OPENAI_API_KEY`. A escolha é automática em `_shared/llm.ts` (`pickTextProvider` em `_shared/provider.ts`; `AI_TEXT_PROVIDER` força um provedor). As funções chamam sempre `callJson` de `llm.ts`, nunca um adaptador direto.
+- Não adicione outro provedor nem use a Anthropic para imagens.
 - Texto: ação nova vira um `action` em `supabase/functions/ai-creature/index.ts`, reaproveitando `SYSTEM`, `contextBlock` e os esquemas. Não crie outra função para texto.
-- `callOpenAIJson` (Responses API) cuida de: modelo por `OPENAI_TEXT_MODEL` (padrão `gpt-6.1-sol`), saída estruturada com `text.format` (`json_schema`, `strict: true`), `reasoning.effort`, `store: false`, tempo-limite, recusa, resposta incompleta e erros HTTP.
+- `callOpenAIJson` (Responses API, chamado via `callJson`) cuida de: modelo por `OPENAI_TEXT_MODEL` (padrão `gpt-6.1-sol`), saída estruturada com `text.format` (`json_schema`, `strict: true`), `reasoning.effort`, `store: false`, tempo-limite, recusa, resposta incompleta e erros HTTP.
 - `effort`: `"medium"` para gerar ou alterar fichas; `"low"` para tarefas curtas.
-- Esquema JSON estrito: todo objeto com `additionalProperties: false` e todas as propriedades em `required`; raiz é objeto. `minItems`/`maxItems` e `minimum`/`maximum` são aceitos; `minLength`/`maxLength` não (corte na normalização).
+- Esquema JSON estrito: todo objeto com `additionalProperties: false` e todas as propriedades em `required`; raiz é objeto. A OpenAI aceita `minItems`/`maxItems` e `minimum`/`maximum`; a Anthropic não, e `stripForAnthropic` as remove antes de enviar. `minLength`/`maxLength` nenhum aceita: corte na normalização.
 - Toda ação de IA chama `consumeQuota(supabase, "text" | "image")` **antes** do provedor (cota diária por usuário em `ai_usage`).
 - Saída do modelo é dado não confiável: passe por `normalizeCreature` (ou equivalente) antes de devolver.
 - Prompts:
@@ -45,6 +47,10 @@ paths:
 - Imagem: só em `ai-image`, via `generateImage`. Modelo por `OPENAI_IMAGE_MODEL` (padrão `gpt-image-2.5-flare`), WebP 1024×1024, qualidade `medium`. O prompt é montado por `buildImagePrompt` (`_shared/creature.ts`), sem chamada extra de texto.
 - Edição de imagem só com imagem-base dentro da pasta do próprio usuário.
 
+### Remover a Anthropic (quando a chave da OpenAI chegar)
+
+Definir `OPENAI_API_KEY` já basta para a OpenAI assumir. Para tirar o código temporário: apague `_shared/anthropic.ts`, faça `callJson` em `llm.ts` chamar só `callOpenAIJson`, remova `pickTextProvider`/`stripForAnthropic` e o teste `src/lib/provider.test.ts`, e limpe as menções em `.env.example`, README, `CLAUDE.md` e nestas regras.
+
 ## Custos
 
-Chamadas reais à OpenAI custam dinheiro. Não rode testes, scripts ou loops que as disparem sem autorização do usuário. Para validar a lógica, use os testes de `src/lib` e os caminhos de erro das funções sem chave configurada.
+Chamadas reais à OpenAI e à Anthropic custam dinheiro. Não rode testes, scripts ou loops que as disparem sem autorização do usuário. Para validar a lógica, use os testes de `src/lib` e os caminhos de erro das funções sem chave configurada.

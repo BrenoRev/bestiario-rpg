@@ -25,7 +25,7 @@ Plataforma web para mestres de RPG criarem e organizarem bestiários por univers
 | Autenticação | Supabase Auth com e-mail e senha |
 | Banco de dados | Supabase Postgres com Row Level Security |
 | Arquivos | Supabase Storage (bucket privado `bestiario`, URLs assinadas) |
-| IA (texto) | OpenAI Responses API (`gpt-6.1-sol` por padrão), via Edge Function `ai-creature`, com saída JSON estruturada estrita |
+| IA (texto) | OpenAI Responses API (`gpt-6.1-sol` por padrão), via Edge Function `ai-creature`, com saída JSON estruturada estrita. **Temporário:** sem chave da OpenAI, usa o Claude (`claude-opus-5-5`, Anthropic) |
 | IA (imagens) | OpenAI Image API (`gpt-image-2.5-flare` por padrão), via Edge Function `ai-image` |
 
 ```mermaid
@@ -128,6 +128,9 @@ npx supabase functions deploy ai-image
 | Variável | Padrão | Para quê |
 |---|---|---|
 | `OPENAI_API_KEY` | (obrigatória) | chave da OpenAI |
+| `ANTHROPIC_API_KEY` | (temporária) | chave da Anthropic; usada para **texto** só enquanto `OPENAI_API_KEY` não existir |
+| `ANTHROPIC_MODEL` | `claude-opus-5-5` | modelo do Claude no modo temporário |
+| `AI_TEXT_PROVIDER` | (automático) | força `openai` ou `anthropic` para o texto |
 | `OPENAI_TEXT_MODEL` | `gpt-6.1-sol` | modelo de texto; precisa aceitar saída estruturada e `reasoning.effort` |
 | `OPENAI_IMAGE_MODEL` | `gpt-image-2.5-flare` | modelo de imagem |
 | `AI_DAILY_TEXT_LIMIT` | `40` | pedidos de texto por usuário a cada 24 horas |
@@ -184,6 +187,7 @@ O repositório é **IA-first**. O `CLAUDE.md` traz as regras gerais, e `.claude/
 - O texto usa saída estruturada estrita (JSON Schema) e um guia de equilíbrio com a tabela de estatísticas por ND do Guia do Mestre.
 - Na modificação, a IA devolve a ficha inteira e o app calcula a diferença. O mestre vê cada campo alterado lado a lado com o atual.
 - As chamadas usam `store: false` (o conteúdo não fica guardado na OpenAI) e tempo-limite de 140 s.
+- **Modo temporário com o Claude:** enquanto não há `OPENAI_API_KEY`, o texto (gerar, variar e modificar criaturas) usa a Anthropic, com `fallbacks: "default"` (se um filtro de segurança recusar por engano um pedido legítimo, a API refaz a chamada em outro modelo). Imagens continuam indisponíveis até a chave da OpenAI.
 - O prompt da imagem é montado a partir da ficha e do estilo do universo, sem chamada extra de texto. Nada é gerado sem um clique do usuário.
 - Ilustrações de propostas descartadas são apagadas na hora; as abandonadas são recolhidas depois de 7 dias.
 - Tipos de criatura: além dos 13 tipos pedidos, o sistema inclui **Humanoide**, que também é tipo oficial de D&D 5e.

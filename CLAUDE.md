@@ -41,7 +41,7 @@ As regras por tema ficam em `.claude/rules/`. As marcadas "sempre" carregam em t
 - Usar a service role key, no frontend ou nas Edge Functions.
 - Editar uma migração que já existe. Toda mudança de banco é uma migração nova.
 - Aplicar sugestão da IA sem revisão do usuário, deixar a IA alterar `notes` ou `image_path`, ou gerar imagem sem clique explícito.
-- Adicionar outro provedor de IA (o projeto usa só a OpenAI) ou fixar modelo no código. Os modelos vêm das variáveis de ambiente.
+- Adicionar outro provedor de IA além da OpenAI e da Anthropic temporária, ou fixar modelo no código. Os modelos vêm das variáveis de ambiente.
 - Cor em hex, fonte ou sombra fora de `src/index.css`.
 - Adicionar login social / OAuth ou outro método de autenticação.
 - Texto de interface em inglês, `alert()`, `confirm()` ou `prompt()`.
@@ -54,7 +54,7 @@ As regras por tema ficam em `.claude/rules/`. As marcadas "sempre" carregam em t
 | Auth | Supabase Auth com e-mail e senha (cadastro e login básicos, sem OAuth) |
 | Banco | Supabase Postgres com RLS em todas as tabelas |
 | Arquivos | Supabase Storage, bucket privado `bestiario`, URLs assinadas |
-| IA | Somente OpenAI, via Edge Functions em Deno: Responses API (texto com saída JSON estruturada) e Image API (ilustração), com cota diária por usuário |
+| IA | OpenAI, via Edge Functions em Deno: Responses API (texto com saída JSON estruturada) e Image API (ilustração), com cota diária por usuário. **Temporário:** sem chave da OpenAI, o texto usa o Claude (Anthropic) |
 | Testes | Vitest para a lógica pura em `src/lib` |
 
 ## Comandos
