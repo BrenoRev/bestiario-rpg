@@ -9,7 +9,7 @@
 // Nada é salvo aqui: as propostas voltam ao app e só entram no bestiário
 // quando o mestre aceita.
 import { loadUniverse, requireUser } from "../_shared/auth.ts";
-import { callOpenAIJson } from "../_shared/openai.ts";
+import { callJson } from "../_shared/llm.ts";
 import { consumeQuota } from "../_shared/quota.ts";
 import { CR_TABLE, CREATURE_SCHEMA, describeUniverse, normalizeCreature, TYPES } from "../_shared/creature.ts";
 import { HttpError, json, readJson, serve } from "../_shared/http.ts";
@@ -166,7 +166,7 @@ serve(async (req) => {
     ].filter(Boolean).join("\n");
 
     await consumeQuota(supabase, "text");
-    const result = await callOpenAIJson<{ alternatives: Alternative[] }>({ system: SYSTEM, prompt, schemaName: "creature_alternatives", schema: ALTERNATIVES_SCHEMA });
+    const result = await callJson<{ alternatives: Alternative[] }>({ system: SYSTEM, prompt, schemaName: "creature_alternatives", schema: ALTERNATIVES_SCHEMA });
     return json({ alternatives: sanitizeAlternatives(result.alternatives) });
   }
 
@@ -188,7 +188,7 @@ serve(async (req) => {
     ].join("\n");
 
     await consumeQuota(supabase, "text");
-    const result = await callOpenAIJson<{ alternatives: Alternative[] }>({ system: SYSTEM, prompt, schemaName: "creature_variations", schema: ALTERNATIVES_SCHEMA });
+    const result = await callJson<{ alternatives: Alternative[] }>({ system: SYSTEM, prompt, schemaName: "creature_variations", schema: ALTERNATIVES_SCHEMA });
     return json({ alternatives: sanitizeAlternatives(result.alternatives) });
   }
 
@@ -208,7 +208,7 @@ serve(async (req) => {
     ].join("\n");
 
     await consumeQuota(supabase, "text");
-    const result = await callOpenAIJson<{ summary: string; creature: unknown }>({ system: SYSTEM, prompt, schemaName: "creature_modification", schema: MODIFY_SCHEMA });
+    const result = await callJson<{ summary: string; creature: unknown }>({ system: SYSTEM, prompt, schemaName: "creature_modification", schema: MODIFY_SCHEMA });
     return json({ summary: clip(result.summary, 2000), creature: normalizeCreature(result.creature) });
   }
 

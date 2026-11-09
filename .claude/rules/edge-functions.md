@@ -52,7 +52,7 @@ serve(async (req) => {
 - Recurso vindo do corpo (id, caminho de arquivo) é conferido contra o usuário antes do uso (veja o prefixo `<user_id>/` em `ai-image`).
 - Entradas de texto cortadas com limite (`clip`) e listas limitadas (`slice`).
 - Segredos só via `requireEnv("NOME")`. Variável nova entra em `supabase/functions/.env.example` e no README.
-- Imports `npm:` com versão exata, iguais aos já usados (`npm:@supabase/supabase-js@2.119.0`). A OpenAI é chamada por `fetch` em `_shared/openai.ts`, sem SDK. Atualizar versão é uma mudança separada, com pedido.
+- Imports `npm:` com versão exata, iguais aos já usados (`npm:@supabase/supabase-js@2.119.0` e, no adaptador temporário, `npm:@anthropic-ai/sdk@1.6.0`). A OpenAI é chamada por `fetch` em `_shared/openai.ts`, sem SDK. Atualizar versão é uma mudança separada, com pedido.
 - Se falhar depois de enviar um arquivo, remova o arquivo (veja o `remove` após erro no insert em `ai-image`).
 
 ## Função nova (checklist)

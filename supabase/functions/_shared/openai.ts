@@ -1,6 +1,7 @@
 // Adaptador único da OpenAI: toda chamada de IA (texto e imagem) passa por aqui.
 // A chave fica só nos secrets das funções (OPENAI_API_KEY).
 import { HttpError, requireEnv } from "./http.ts";
+import type { JsonCallOptions } from "./provider.ts";
 
 const API = "https://api.openai.com/v1";
 
@@ -43,18 +44,6 @@ async function failFromResponse(res: Response, what: "texto" | "imagem"): Promis
 }
 
 // ---------------------------------------------------------------- Texto
-interface JsonCallOptions {
-  /** Instruções de sistema. */
-  system: string;
-  /** Pedido do usuário (com os dados entre tags XML). */
-  prompt: string;
-  /** Nome curto do esquema (letras, números, _ ou -). */
-  schemaName: string;
-  /** JSON Schema estrito: todo objeto com additionalProperties false e tudo em required. */
-  schema: Record<string, unknown>;
-  effort?: "low" | "medium" | "high";
-  maxOutputTokens?: number;
-}
 
 interface ResponsesPayload {
   status?: string;
