@@ -116,7 +116,6 @@ export function UniversePage() {
           </>
         }
         confirmLabel="Excluir universo"
-        danger
         loading={deleting}
         onConfirm={remove}
         onClose={() => setConfirm(false)}

@@ -2,6 +2,9 @@
 // cliente Supabase que age COMO o usuário — toda leitura/escrita passa pela RLS.
 import { createClient, type SupabaseClient, type User } from "npm:@supabase/supabase-js@2.119.0";
 import { HttpError, requireEnv } from "./http.ts";
+import type { UniverseRow } from "./types.ts";
+
+export type { UniverseRow };
 
 export interface AuthContext {
   supabase: SupabaseClient;
@@ -27,17 +30,6 @@ export async function requireUser(req: Request): Promise<AuthContext> {
   return { supabase, user: data.user };
 }
 
-export interface UniverseRow {
-  id: string;
-  name: string;
-  description: string;
-  genre: string;
-  setting: string;
-  era: string;
-  fantasy_level: string;
-  rules: string;
-  art_style: string;
-}
 
 /** Carrega um universo do usuário (a RLS garante que só o dono o enxerga). */
 export async function loadUniverse(supabase: SupabaseClient, universeId: string): Promise<UniverseRow> {

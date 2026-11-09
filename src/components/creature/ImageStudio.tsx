@@ -251,7 +251,6 @@ export function ImageStudio({ universeId, creatureId, creature, currentPath, onS
         title="Excluir esta versão?"
         message="O arquivo será apagado permanentemente."
         confirmLabel="Excluir"
-        danger
         loading={busy}
         onConfirm={removeVersion}
         onClose={() => setToDelete(null)}

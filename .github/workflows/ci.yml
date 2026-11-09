@@ -43,16 +43,15 @@ jobs:
         with:
           deno-version: v2.x
       - name: Checagem de tipos das funções
+        # Sem isso o Deno lê o package.json da raiz e passa a exigir node_modules.
+        env:
+          DENO_NO_PACKAGE_JSON: "1"
         run: deno check supabase/functions/*/index.ts
 
   database:
-    name: Banco (migrações do zero)
+    name: Banco (migrações e segurança)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      # Valores fictícios: o config.toml exige as variáveis do Google, mas o CI não faz login.
-      SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID: ci
-      SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET: ci
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
@@ -62,3 +61,10 @@ jobs:
         run: supabase start -x vector,logflare,imgproxy,supavisor,studio
       - name: Reaplica as migrações do zero
         run: supabase db reset
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Teste de segurança (RLS e Storage)
+        run: npm run test:rls

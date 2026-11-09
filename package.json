@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "test": "vitest run",
-    "check:functions": "docker run --rm -v \"$PWD/supabase/functions:/fns\" -w /fns denoland/deno:latest deno check ai-creature/index.ts ai-image/index.ts"
+    "test:rls": "node supabase/tests/rls.test.mjs",
+    "check:functions": "docker run --rm -v \"$PWD:/repo\" -w /repo -e DENO_NO_PACKAGE_JSON=1 denoland/deno:latest sh -c 'deno check supabase/functions/*/index.ts'"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",

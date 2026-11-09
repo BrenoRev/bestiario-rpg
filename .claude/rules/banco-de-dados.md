@@ -12,7 +12,7 @@ paths:
 - **Nunca edite uma migração existente**, nem para corrigir. Escreva outra.
 - Comentários do SQL em pt-BR, como em `20261108000000_init.sql`.
 - A migração entra no mesmo commit que o código que depende dela.
-- Teste com `npx supabase db reset` no banco local antes de dizer que terminou.
+- Teste com `npx supabase db reset` e `npm run test:rls` no banco local antes de dizer que terminou.
 
 ## Modelo de tabela nova
 
@@ -67,6 +67,8 @@ create policy "exemplos_delete_own" on public.exemplos
 - Coluna derivada: `generated always as (…) stored` (veja `creatures.cr_value`).
 - Exclusão em cascata pelas FKs (`on delete cascade`). Arquivos do Storage não somem com a linha: o app remove (veja `deleteCreature`).
 - Função `security definer` sempre com `set search_path = ''` e nomes qualificados (`public.…`).
+- Coluna que o usuário não deve editar: `revoke update`/`insert` na tabela e `grant` só nas colunas permitidas (veja `profiles` e `ai_usage` em `20261109000000_hardening.sql`).
+- Tabela de registro (ex.: `ai_usage`) não tem políticas de update/delete: ninguém apaga o próprio histórico.
 - Proibido: `grant` amplo, política `using (true)`, desligar RLS, usar a service role para contornar política.
 - Contagem e junção usam o embed do PostgREST (`creatures(count)`, `universes(name)`) em vez de view ou RPC, a não ser que haja pedido.
 
@@ -79,5 +81,6 @@ create policy "exemplos_delete_own" on public.exemplos
 
 ## Autenticação
 
-- Só Google. O provedor de e-mail fica desativado (`[auth.email] enabled = false` em `config.toml` e no painel do Supabase).
-- O perfil nasce pelo trigger `on_auth_user_created` → `handle_new_user`. Não crie perfil pelo app.
+- Cadastro e login por e-mail e senha no Supabase Auth. `config.toml`: `[auth.email] enabled = true`, `enable_confirmations = false`, `secure_password_change = true`, `double_confirm_changes = true`; `[auth] minimum_password_length = 6`, `password_requirements = "letters_digits"`. Produção usa a mesma política; se mudar lá, mude aqui e em `passwordProblem` (`AuthContext.tsx`).
+- O nome do cadastro vai em `options.data.full_name` no `signUp`; o perfil nasce pelo trigger `on_auth_user_created` → `handle_new_user`. Não crie perfil pelo app.
+- Sem provedores OAuth, salvo pedido explícito.

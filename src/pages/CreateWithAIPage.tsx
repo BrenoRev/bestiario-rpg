@@ -7,26 +7,19 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { AIAssistModal, CREATIVITY_OPTIONS, DETAIL_OPTIONS, DiffReview } from "../components/creature/AIAssist";
+import { AIAssistModal, CREATIVITY_OPTIONS, DETAIL_OPTIONS } from "../components/creature/AIAssist";
 import { ImageStudio } from "../components/creature/ImageStudio";
+import { CombineModal, type Proposal, VariationRequest } from "../components/creature/ProposalModals";
 import { Narrative, StatBlock } from "../components/creature/StatBlock";
-import { Modal } from "../components/Modal";
 import { errorMessage, useToast } from "../components/Toast";
-import { Badge, Button, cx, EmptyState, PageHeader, PageLoader, Segmented, Select, TextArea, Toggle } from "../components/ui";
+import { Button, cx, EmptyState, PageHeader, PageLoader, Segmented, Select, TextArea, Toggle } from "../components/ui";
 import { useAuth } from "../context/AuthContext";
 import { useCurrentUniverse } from "../context/UniverseContext";
 import { keys, useProfile } from "../hooks/queries";
-import { generateCreatures, generateVariations } from "../lib/ai";
-import { attachImagesToCreature, createCreature } from "../lib/api";
-import { applyFields, diffCreatures } from "../lib/creature";
+import { generateCreatures } from "../lib/ai";
+import { attachImagesToCreature, cleanupOrphanImages, createCreature, deleteDraftImages } from "../lib/api";
 import { CHALLENGE_RATINGS, CREATURE_TYPES } from "../lib/dnd";
-import type { AIAlternative, CreatureDraft, CreatureImage, Creativity, Detail } from "../lib/types";
-
-interface Proposal extends AIAlternative {
-  key: string;
-  images: CreatureImage[];
-  savedId?: string;
-}
+import type { AIAlternative, CreatureImage, Creativity, Detail } from "../lib/types";
 
 interface Settings {
   description: string;
@@ -101,6 +94,11 @@ export function CreateWithAIPage() {
     setPrefsApplied(true);
   }, [profile, prefsApplied]);
 
+  // Recolhe ilustrações de rascunho abandonadas há mais de 7 dias.
+  useEffect(() => {
+    void cleanupOrphanImages();
+  }, []);
+
   // Guarda a sessão de criação para não perder propostas ao navegar.
   useEffect(() => {
     if (!user) return;
@@ -158,6 +156,8 @@ export function CreateWithAIPage() {
   };
 
   const discard = (key: string) => {
+    const removed = proposals.find((p) => p.key === key);
+    if (removed && !removed.savedId) void deleteDraftImages(removed.images);
     setProposals((list) => {
       const idx = list.findIndex((p) => p.key === key);
       const next = list.filter((p) => p.key !== key);
@@ -461,182 +461,5 @@ export function CreateWithAIPage() {
         </>
       )}
     </>
-  );
-}
-
-// ---------------------------------------------------------------- Variação
-function VariationRequest({
-  open,
-  onClose,
-  base,
-  universeId,
-  settings,
-  onResult,
-}: {
-  open: boolean;
-  onClose: () => void;
-  base: CreatureDraft;
-  universeId: string;
-  settings: Settings;
-  onResult: (alts: AIAlternative[]) => void;
-}) {
-  const toast = useToast();
-  const [instruction, setInstruction] = useState("");
-  const [count, setCount] = useState("1");
-  const [loading, setLoading] = useState(false);
-
-  const run = async () => {
-    setLoading(true);
-    try {
-      const alts = await generateVariations({
-        universeId,
-        useUniverseContext: settings.useContext,
-        creativity: settings.creativity,
-        detail: settings.detail,
-        creature: base,
-        instruction,
-        count: Number(count),
-      });
-      onResult(alts);
-      setInstruction("");
-      onClose();
-      toast.success(alts.length > 1 ? "Variações adicionadas às propostas." : "Variação adicionada às propostas.");
-    } catch (err) {
-      toast.error(errorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      busy={loading}
-      title={`Variação de ${base.name || "criatura"}`}
-      description="A variação entra como uma nova proposta; a atual continua disponível."
-      footer={
-        <>
-          <Button onClick={onClose} disabled={loading}>
-            Cancelar
-          </Button>
-          <Button variant="primary" icon={<GitBranch className="size-4" />} onClick={run} loading={loading}>
-            {loading ? "Criando…" : "Criar variação"}
-          </Button>
-        </>
-      }
-    >
-      <div className="space-y-4">
-        <TextArea
-          label="Que tipo de variação? (opcional)"
-          value={instruction}
-          onChange={(e) => setInstruction(e.target.value)}
-          placeholder="Ex.: uma versão jovem e mais fraca; uma rainha da colmeia; uma forma corrompida por magia."
-          disabled={loading}
-        />
-        <Select label="Quantidade" value={count} onChange={(e) => setCount(e.target.value)} disabled={loading}>
-          <option value="1">1 variação</option>
-          <option value="2">2 variações</option>
-          <option value="3">3 variações</option>
-        </Select>
-        {loading && (
-          <p className="flex items-center gap-2 rounded-lg bg-parchment px-3 py-2 text-xs text-muted">
-            <Sparkles className="size-4 animate-pulse text-wine" /> Criando a variação…
-          </p>
-        )}
-      </div>
-    </Modal>
-  );
-}
-
-// ---------------------------------------------------------------- Combinar
-function CombineModal({
-  open,
-  onClose,
-  target,
-  others,
-  onApply,
-}: {
-  open: boolean;
-  onClose: () => void;
-  target: Proposal;
-  others: Proposal[];
-  onApply: (next: CreatureDraft) => void;
-}) {
-  const [sourceKey, setSourceKey] = useState("");
-  const [selected, setSelected] = useState<Set<keyof CreatureDraft>>(new Set());
-  const source = others.find((o) => o.key === sourceKey) ?? others[0];
-
-  useEffect(() => {
-    if (open) {
-      setSourceKey(others[0]?.key ?? "");
-      setSelected(new Set());
-    }
-  }, [open, others]);
-
-  if (!source) return null;
-  const changed = diffCreatures(target.creature, source.creature);
-
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      size="lg"
-      title={`Combinar em “${target.creature.name}”`}
-      description="Escolha uma outra proposta e marque os campos que quer trazer dela. O restante permanece como está."
-      footer={
-        <>
-          <Button onClick={onClose}>Cancelar</Button>
-          <Button
-            variant="primary"
-            icon={<Combine className="size-4" />}
-            disabled={selected.size === 0}
-            onClick={() => {
-              onApply(applyFields(target.creature, source.creature, [...selected]));
-              onClose();
-            }}
-          >
-            Trazer {selected.size || ""} {selected.size === 1 ? "campo" : "campos"}
-          </Button>
-        </>
-      }
-    >
-      <div className="mb-4 flex flex-wrap items-end gap-3">
-        <Select label="Trazer campos de" value={source.key} onChange={(e) => {
-          setSourceKey(e.target.value);
-          setSelected(new Set());
-        }} wrapperClassName="min-w-60 flex-1">
-          {others.map((o) => (
-            <option key={o.key} value={o.key}>
-              {o.creature.name}
-            </option>
-          ))}
-        </Select>
-        <div className="flex gap-2">
-          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set(changed))}>
-            Marcar todos
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
-            Limpar
-          </Button>
-        </div>
-      </div>
-      <Badge tone="neutral" className="mb-3">
-        “Atual” é {target.creature.name}; “Proposta” é {source.creature.name}
-      </Badge>
-      <DiffReview
-        current={target.creature}
-        proposal={source.creature}
-        selected={selected}
-        onToggle={(key) =>
-          setSelected((s) => {
-            const next = new Set(s);
-            if (next.has(key)) next.delete(key);
-            else next.add(key);
-            return next;
-          })
-        }
-      />
-    </Modal>
   );
 }

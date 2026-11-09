@@ -28,7 +28,7 @@ paths:
 
 ## Enums em três lugares
 
-Tamanho, tipo, ND e ambientes existem em `src/lib/dnd.ts`, em `supabase/functions/_shared/creature.ts` e no `check` da tabela na migração. Mudou um, mude os três (o `check` muda por migração nova).
+Tamanho, tipo, ND e ambientes existem em `src/lib/dnd.ts`, em `supabase/functions/_shared/creature.ts` e no `check` da tabela na migração. Mudou um, mude os três (o `check` muda por migração nova). O `src/lib/consistency.test.ts` falha se eles divergirem.
 
 ## Campo novo na ficha (checklist)
 

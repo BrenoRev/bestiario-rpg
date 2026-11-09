@@ -37,11 +37,22 @@ export function UniverseFormPage() {
     }
     setSaving(true);
     try {
-      let saved = editing ? await updateUniverse(universeId!, { ...value, cover_path: value.cover_path }) : await createUniverse({ ...value, cover_path: null });
       const previousCover = universe?.cover_path ?? null;
+      let saved = editing
+        ? await updateUniverse(universeId!, { ...value, cover_path: coverFile ? previousCover : value.cover_path })
+        : await createUniverse({ ...value, cover_path: null });
+
+      // A capa é um passo à parte: se falhar, o universo já salvo segue em frente
+      // (salvar de novo criaria um universo duplicado).
       if (coverFile) {
-        const path = await uploadImage(coverFile, saved.id, "covers");
-        saved = await updateUniverse(saved.id, { cover_path: path });
+        let uploaded: string | null = null;
+        try {
+          uploaded = await uploadImage(coverFile, saved.id, "covers");
+          saved = await updateUniverse(saved.id, { cover_path: uploaded });
+        } catch (err) {
+          if (uploaded) await removeFile(uploaded);
+          toast.error(`O universo foi salvo, mas a capa não. ${errorMessage(err)}`);
+        }
       }
       // Capa trocada ou removida: apaga o arquivo antigo.
       if (previousCover && previousCover !== saved.cover_path) await removeFile(previousCover);

@@ -1,18 +1,60 @@
-import type { Session, User } from "@supabase/supabase-js";
+import type { AuthError, Session, User } from "@supabase/supabase-js";
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 
+/** Mesma política do Supabase Auth: mínimo de 6 caracteres, com letras e números. */
+export const MIN_PASSWORD_LENGTH = 6;
+export const PASSWORD_RULE = `Pelo menos ${MIN_PASSWORD_LENGTH} caracteres, com letras e números.`;
+
+/** Valida a senha de cadastro no app, antes de enviar (devolve a mensagem do problema ou null). */
+export function passwordProblem(password: string): string | null {
+  if (password.length < MIN_PASSWORD_LENGTH) return `A senha precisa ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`;
+  if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) return "A senha precisa ter letras e números.";
+  return null;
+}
+
+interface SignUpResult {
+  /** false quando o projeto exige confirmação por e-mail antes do primeiro login. */
+  signedIn: boolean;
+}
+
 interface AuthState {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (name: string, email: string, password: string) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
+
+/** Traduz os erros do Supabase Auth para mensagens em pt-BR (pelo código, não pelo texto). */
+function authMessage(error: AuthError): string {
+  switch (error.code) {
+    case "invalid_credentials":
+      return "E-mail ou senha incorretos.";
+    case "user_already_exists":
+    case "email_exists":
+      return "Já existe uma conta com este e-mail. Entre com sua senha.";
+    case "weak_password":
+      return `Escolha uma senha mais forte: ${PASSWORD_RULE.toLowerCase()}`;
+    case "email_address_invalid":
+      return "Este e-mail não é válido.";
+    case "email_not_confirmed":
+      return "Confirme seu e-mail pelo link que enviamos antes de entrar.";
+    case "over_request_rate_limit":
+    case "over_email_send_rate_limit":
+      return "Muitas tentativas seguidas. Aguarde um pouco e tente de novo.";
+    case "signup_disabled":
+      return "Novos cadastros estão desativados no momento.";
+    default:
+      console.error(error);
+      return "Não foi possível concluir agora. Tente novamente.";
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -37,15 +79,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       user: session?.user ?? null,
       loading,
-      async signInWithGoogle() {
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
-            queryParams: { prompt: "select_account" },
-          },
+      async signIn(email, password) {
+        const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+        if (error) throw new Error(authMessage(error));
+      },
+      async signUp(name, email, password) {
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          // O trigger handle_new_user copia full_name para profiles.display_name.
+          options: { data: { full_name: name.trim() }, emailRedirectTo: window.location.origin },
         });
-        if (error) throw new Error("Não foi possível iniciar o login com Google.");
+        if (error) throw new Error(authMessage(error));
+        return { signedIn: !!data.session };
       },
       async signOut() {
         await supabase.auth.signOut();

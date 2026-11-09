@@ -7,7 +7,7 @@ paths:
 
 ## Páginas
 
-- Uma tela por arquivo em `src/pages/NomePage.tsx`, registrada em `src/App.tsx`. Telas de usuário logado são filhas de `RequireAuth`, que já entrega `UniverseProvider` e `AppLayout` (barra lateral, topo, largura máxima). Não crie outro layout.
+- Uma tela por arquivo em `src/pages/NomePage.tsx`, registrada em `src/App.tsx` com carregamento sob demanda (`const NomePage = page(() => import("./pages/NomePage"), "NomePage")`). Só login e retorno do OAuth são importados direto. Telas de usuário logado são filhas de `RequireAuth`, que já entrega `UniverseProvider` e `AppLayout` (barra lateral, topo, largura máxima). Não crie outro layout.
 - Item novo na barra lateral só com pedido explícito. A navegação principal é: Meus Mundos, Criaturas, Criar com IA, Configurações.
 - Estrutura de toda tela:
 
@@ -72,7 +72,8 @@ const save = async () => {
 ```
 
 - Criar ou excluir criatura muda a contagem do universo: invalide também `keys.universes`.
-- Excluir uma linha com arquivo no Storage remove o arquivo também (veja `deleteCreature`, `deleteUniverse`).
+- Excluir uma linha com arquivo no Storage remove o arquivo também, **depois** de apagar a linha (veja `deleteCreature`, `deleteUniverse`).
+- Operação em várias etapas (criar e depois enviar capa) trata a etapa secundária à parte, para uma falha não levar a duplicar a principal (veja `UniverseFormPage`).
 - Validação de formulário: `toast.error("…")` antes de chamar a API, como em `UniverseFormPage`. Sem biblioteca de validação.
 - `fail(error, "mensagem")` registra o erro bruto com `console.error` e lança a mensagem amigável. Toda função de `api.ts` usa esse padrão.
 
@@ -80,7 +81,9 @@ const save = async () => {
 
 - Caminhos: `<user_id>/<universe_id>/images/<uuid>.<ext>` (ilustrações) e `<user_id>/<universe_id>/covers/<uuid>.<ext>` (capas).
 - Envio por `uploadImage` / `uploadCreatureImage` (PNG, JPG ou WebP até 10 MB).
-- Exibição sempre por `<StoredImage path=… />` (URL assinada + placeholder). Nunca URL pública: o bucket é privado.
+- Exibição sempre por `<StoredImage path=… />`. As URLs assinadas são pedidas em lote e guardadas em cache por `signedUrl` (`api.ts`). Nunca URL pública: o bucket é privado.
+- Uploads passam por `prepareImage` (máx. 1600 px, WebP) dentro de `uploadImage`. Não envie arquivo do usuário por outro caminho.
+- Versões de rascunho descartadas são apagadas (`deleteDraftImages`); as abandonadas são recolhidas por `cleanupOrphanImages`.
 - Versões em `creature_images`; a escolhida em `creatures.image_path`. Todo fluxo de imagem passa pelo `ImageStudio`.
 
 ## Estado

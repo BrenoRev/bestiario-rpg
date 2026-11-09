@@ -15,17 +15,17 @@ Identidade: bestiário antigo, mas limpo e legível. Papel envelhecido, pergamin
 | `components/ui.tsx` | `Button` (variantes `primary`, `secondary`, `ghost`, `subtle`, `danger`; props `loading`, `icon`, `size="sm"`), `IconButton` (exige `label`), `TextInput`, `NumberInput`, `TextArea`, `Select`, `Segmented`, `Toggle`, `Badge` (tons `neutral`, `wine`, `moss`, `amber`), `Spinner`, `PageLoader`, `EmptyState`, `ErrorState`, `PageHeader`, `cx` |
 | `components/Modal.tsx` | `Modal` (tamanhos `sm`…`xl`, `footer`, `busy`), `ConfirmDialog` |
 | `components/Toast.tsx` | `useToast()` (`success`, `error`, `info`), `errorMessage(err)` |
-| `components/brand.tsx` | `Logo`, `GoogleIcon`, `StoredImage`, `Avatar` |
+| `components/brand.tsx` | `Logo`, `StoredImage`, `Avatar` |
 
 - Precisa de um primitivo que não existe e vai ser usado em mais de um lugar? Proponha e, aprovado, crie em `ui.tsx` no mesmo estilo.
 - `<button>` cru só para chips, abas e itens de menu, copiando as classes de um caso existente (pedidos rápidos em `AIAssist.tsx`, abas em `CreateWithAIPage.tsx`, menus em `Topbar.tsx`).
-- Uma ação principal (`variant="primary"`) por área. Ação destrutiva usa `variant="danger"` e sempre passa por `ConfirmDialog`.
+- Uma ação principal (`variant="primary"`) por área. Ação destrutiva usa `variant="danger"` no botão que a inicia e sempre passa por `ConfirmDialog`, cujo título diz o que será feito.
 - Nunca `alert()`, `confirm()` ou `prompt()`.
 
 ## Tokens (`src/index.css`)
 
 - **Cores, só por token**: `paper` (fundo), `parchment` e `cream` (superfícies), `sand`, `line` e `line-strong` (bordas), `ink`, `ink-soft` e `muted` (texto), `wine`, `wine-dark`, `wine-soft`, `wine-line` e `wine-tint` (destaque), `moss`, `moss-soft` e `moss-line` (positivo, ambientes), `amber`, `amber-soft` e `amber-line` (atenção). Ex.: `bg-cream`, `text-wine`, `border-line`, `bg-ink/40`.
-- Cor nova só com aprovação, e entra como token em `@theme`. A única cor fora de token é a do botão "Entrar com Google" (identidade do Google).
+- Cor nova só com aprovação, e entra como token em `@theme`. Nenhuma cor fica fora dos tokens.
 - Classes prontas: `.card`, `.field`, `.label`, `.hint`, `.section-title`, `.stat-rule`, `.stat-heading`, `.skeleton`, `.animate-fade-in`.
 - Sombras: `shadow-[var(--shadow-soft)]` (repouso) e `shadow-[var(--shadow-pop)]` (menus, modais, hover de cartão).
 - Cantos: `rounded-lg` em controles; `.card` ou `rounded-[var(--radius-card)]` em cartões.
