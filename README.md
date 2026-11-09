@@ -142,7 +142,15 @@ npm install
 npm run dev                     # http://localhost:5173
 ```
 
-Para produção, `npm run build` gera `dist/`, que pode ir para qualquer hospedagem estática (Vercel, Netlify, Cloudflare Pages). Configure a hospedagem para reescrever todas as rotas para `index.html` (SPA), acrescente a URL de produção nas Redirect URLs do Supabase e em `ALLOWED_ORIGINS`.
+### 6. Publicação na Vercel
+
+O projeto já traz o `vercel.json`. Ele contém o preset Vite, o build em `dist/`, a reescrita de todas as rotas para `index.html` (sem isso, recarregar `/criaturas` daria 404), cabeçalhos de segurança e cache longo para `assets/`.
+
+1. Importe o repositório na Vercel (preset **Vite**, diretório raiz `./`).
+2. Em **Settings → Environment Variables**, para *Production* e *Preview*, defina `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (a chave pública *publishable* ou *anon*; nunca a *secret* ou *service_role*). O botão **Import .env** aceita o seu `.env.local`.
+3. Faça o deploy. Cada Pull Request ganha um deploy de prévia.
+4. No Supabase, em **Authentication → URL Configuration**, use a URL de produção como *Site URL*.
+5. Opcional: restrinja as Edge Functions ao site com `npx supabase secrets set ALLOWED_ORIGINS=https://seu-app.vercel.app,http://localhost:5173`. Os deploys de prévia ficam sem acesso à IA enquanto a restrição estiver ativa.
 
 ### Desenvolvimento local com o Supabase CLI
 

@@ -84,6 +84,7 @@ supabase/
   migrations/       SQL versionado: esquema, RLS, Storage
   functions/        _shared/ (auth, http, claude, esquema da ficha) + uma pasta por função
   config.toml       ambiente local
+vercel.json         deploy do frontend (reescrita SPA, cabeçalhos, cache)
 ```
 
 ## Onde está o modelo (copie daqui)
