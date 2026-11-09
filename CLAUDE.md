@@ -70,6 +70,8 @@ As regras por tema ficam em `.claude/rules/`. As marcadas "sempre" carregam em t
 | `npx supabase start` | sobe o Supabase local (Docker) e aplica as migrações |
 | `npx supabase db reset` | reaplica todas as migrações do zero no banco local |
 
+**Publicação:** mesclar na `main` publica tudo. A Vercel publica o site, e `.github/workflows/deploy-supabase.yml` aplica as migrações e publica as Edge Functions depois que o CI passa. Não publique à mão (`db push`, `functions deploy`) a não ser que o workflow esteja quebrado e o usuário peça.
+
 ## Mapa do repositório
 
 ```

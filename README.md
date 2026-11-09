@@ -177,14 +177,23 @@ Use a URL e a anon key mostradas pelo `supabase start` no `.env.local`.
 | `npm run test:rls` | teste de integração de segurança contra o Supabase local (rode `npx supabase start` antes) |
 | `npm run check:functions` | checagem de tipos das Edge Functions (Deno via Docker), igual ao CI |
 
-## Integração contínua
+## Integração e publicação contínuas
 
-Todo Pull Request e todo push na `main` rodam `.github/workflows/ci.yml`, com três jobs:
-- **Frontend**: tipos, testes unitários e build.
-- **Edge Functions**: `deno check`.
-- **Banco**: migrações do zero e `npm run test:rls`.
+| Workflow | Quando roda | O que faz |
+|---|---|---|
+| `.github/workflows/ci.yml` | todo Pull Request e todo push na `main` | **Frontend:** tipos, testes e build. **Edge Functions:** `deno check`. **Banco:** migrações do zero e `npm run test:rls`. |
+| `.github/workflows/deploy-supabase.yml` | depois de um CI verde em push na `main` (ou à mão em *Actions → Run workflow*) | aplica as migrações pendentes (`supabase db push`) e publica as Edge Functions no projeto de produção |
+| Vercel (integração Git) | push na `main` e cada PR | publica o site; cada PR ganha um deploy de prévia |
 
-Recomenda-se proteger a `main` no GitHub exigindo esses três checks.
+Ou seja: **mesclar na `main` publica tudo**, o site pela Vercel e o backend pelo workflow.
+
+Para o deploy do Supabase funcionar, cadastre no repositório (*Settings → Secrets and variables → Actions*, ou `gh secret set NOME`):
+- `SUPABASE_ACCESS_TOKEN` (obrigatório): token pessoal em supabase.com → *Account → Access Tokens*.
+- `SUPABASE_DB_PASSWORD` (opcional): senha do banco; sem ela, o CLI usa um papel de login temporário.
+
+Os segredos das funções (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`…) continuam sendo definidos com `npx supabase secrets set`; o workflow não mexe neles.
+
+Recomenda-se proteger a `main` no GitHub exigindo os três checks do CI.
 
 ## Desenvolvendo com IA
 

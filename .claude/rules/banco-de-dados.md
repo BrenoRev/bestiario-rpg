@@ -12,6 +12,7 @@ paths:
 - **Nunca edite uma migração existente**, nem para corrigir. Escreva outra.
 - Comentários do SQL em pt-BR, como em `20261108000000_init.sql`.
 - A migração entra no mesmo commit que o código que depende dela.
+- Ao entrar na `main`, o workflow `deploy-supabase.yml` aplica a migração em produção automaticamente. Revise com cuidado: não há volta, só uma migração nova corrige.
 - Teste com `npx supabase db reset` e `npm run test:rls` no banco local antes de dizer que terminou.
 
 ## Modelo de tabela nova
