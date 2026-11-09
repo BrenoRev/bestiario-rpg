@@ -20,12 +20,17 @@ const SIZES = { sm: "max-w-md", md: "max-w-xl", lg: "max-w-3xl", xl: "max-w-5xl"
 
 export function Modal({ open, onClose, title, description, children, footer, size = "md", busy }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  // Refs evitam re-executar o efeito a cada render do pai (o que roubava o foco de quem digita).
+  const onCloseRef = useRef(onClose);
+  const busyRef = useRef(busy);
+  onCloseRef.current = onClose;
+  busyRef.current = busy;
 
   useEffect(() => {
     if (!open) return;
     const previous = document.activeElement as HTMLElement | null;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !busy) onClose();
+      if (e.key === "Escape" && !busyRef.current) onCloseRef.current();
     };
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -35,7 +40,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
       document.body.style.overflow = "";
       previous?.focus?.();
     };
-  }, [open, busy, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
@@ -74,7 +79,6 @@ export function ConfirmDialog({
   title,
   message,
   confirmLabel = "Confirmar",
-  danger,
   loading,
   onConfirm,
   onClose,
@@ -83,7 +87,6 @@ export function ConfirmDialog({
   title: string;
   message: ReactNode;
   confirmLabel?: string;
-  danger?: boolean;
   loading?: boolean;
   onConfirm: () => void;
   onClose: () => void;
@@ -100,7 +103,7 @@ export function ConfirmDialog({
           <Button onClick={onClose} disabled={loading}>
             Cancelar
           </Button>
-          <Button variant={danger ? "primary" : "primary"} onClick={onConfirm} loading={loading}>
+          <Button variant="primary" onClick={onConfirm} loading={loading}>
             {confirmLabel}
           </Button>
         </>

@@ -1,10 +1,10 @@
-import { BookOpen, Globe2, Sparkles } from "lucide-react";
+import { BookOpen, Globe2, LogIn, Sparkles, UserPlus } from "lucide-react";
 import { useState } from "react";
-import { Navigate, useSearchParams } from "react-router";
-import { GoogleIcon, Logo } from "../components/brand";
+import { Navigate, useLocation } from "react-router";
+import { Logo } from "../components/brand";
 import { errorMessage } from "../components/Toast";
-import { Spinner } from "../components/ui";
-import { useAuth } from "../context/AuthContext";
+import { Button, Segmented, TextInput } from "../components/ui";
+import { MIN_PASSWORD_LENGTH, useAuth } from "../context/AuthContext";
 
 const FEATURES = [
   { icon: Globe2, title: "Um bestiário por mundo", text: "Organize criaturas por universo e campanha." },
@@ -12,23 +12,52 @@ const FEATURES = [
   { icon: Sparkles, title: "IA como parceira criativa", text: "Sugestões e ilustrações que você aceita ou descarta." },
 ];
 
+type Mode = "entrar" | "criar";
+
 export function LoginPage() {
-  const { user, loading, signInWithGoogle } = useAuth();
-  const [params] = useSearchParams();
+  const { user, loading, signIn, signUp } = useAuth();
+  const location = useLocation();
+  const from = (location.state as { from?: string } | null)?.from ?? "/";
+  const [mode, setMode] = useState<Mode>("entrar");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(params.get("erro"));
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  if (!loading && user) return <Navigate to="/" replace />;
+  if (!loading && user) return <Navigate to={from} replace />;
 
-  const login = async () => {
-    setPending(true);
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError(null);
+    setNotice(null);
+    if (mode === "criar" && !name.trim()) return setError("Diga como quer ser chamado.");
+    if (!email.trim()) return setError("Informe seu e-mail.");
+    if (password.length < MIN_PASSWORD_LENGTH) return setError(`A senha precisa ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`);
+    setPending(true);
     try {
-      await signInWithGoogle(); // redireciona para o Google
+      if (mode === "entrar") {
+        await signIn(email, password);
+      } else {
+        const { signedIn } = await signUp(name, email, password);
+        if (!signedIn) {
+          setNotice("Conta criada. Confirme seu e-mail pelo link que enviamos e depois entre.");
+          setMode("entrar");
+        }
+      }
+      // Com sessão, o redirecionamento acontece no próximo render (Navigate acima).
     } catch (err) {
       setError(errorMessage(err));
+    } finally {
       setPending(false);
     }
+  };
+
+  const switchMode = (next: Mode) => {
+    setMode(next);
+    setError(null);
+    setNotice(null);
   };
 
   return (
@@ -66,28 +95,59 @@ export function LoginPage() {
           <div className="mb-10 lg:hidden">
             <Logo />
           </div>
-          <h1 className="text-[2.4rem] leading-tight font-semibold">Bem-vindo ao Bestiario</h1>
-          <p className="mt-2 text-sm text-muted">Entre com sua conta Google para acessar seus mundos e criaturas.</p>
-
-          <button
-            type="button"
-            onClick={login}
-            disabled={pending || loading}
-            className="mt-8 flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-line-strong bg-white text-[0.95rem] font-medium text-[#1f1f1f] shadow-[var(--shadow-soft)] transition-colors hover:bg-[#f8f8f8] disabled:opacity-60 cursor-pointer"
-          >
-            {pending ? <Spinner className="size-5" /> : <GoogleIcon className="size-5" />}
-            {pending ? "Redirecionando…" : "Entrar com Google"}
-          </button>
-
-          {error && (
-            <p role="alert" className="mt-4 rounded-lg border border-wine-line bg-wine-soft px-3 py-2 text-sm text-wine">
-              {error}
-            </p>
-          )}
-
-          <p className="mt-8 text-xs leading-relaxed text-muted">
-            O acesso é feito somente com conta Google. Seus universos e criaturas ficam visíveis apenas para você.
+          <h1 className="text-[2.4rem] leading-tight font-semibold">{mode === "entrar" ? "Bem-vindo de volta" : "Crie sua conta"}</h1>
+          <p className="mt-2 text-sm text-muted">
+            {mode === "entrar" ? "Entre para acessar seus mundos e criaturas." : "Leva um minuto. Depois é só começar o seu primeiro bestiário."}
           </p>
+
+          <div className="mt-8">
+            <Segmented<Mode>
+              value={mode}
+              onChange={switchMode}
+              options={[
+                { value: "entrar", label: "Entrar" },
+                { value: "criar", label: "Criar conta" },
+              ]}
+            />
+          </div>
+
+          <form onSubmit={submit} className="mt-6 space-y-4" noValidate>
+            {mode === "criar" && (
+              <TextInput label="Nome" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} placeholder="Ex.: Mestre Ana" />
+            )}
+            <TextInput label="E-mail" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@exemplo.com" />
+            <TextInput
+              label="Senha"
+              type="password"
+              autoComplete={mode === "entrar" ? "current-password" : "new-password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              hint={mode === "criar" ? `Pelo menos ${MIN_PASSWORD_LENGTH} caracteres.` : undefined}
+            />
+
+            {error && (
+              <p role="alert" className="rounded-lg border border-wine-line bg-wine-soft px-3 py-2 text-sm text-wine">
+                {error}
+              </p>
+            )}
+            {notice && (
+              <p role="status" className="rounded-lg border border-moss-line bg-moss-soft px-3 py-2 text-sm text-moss">
+                {notice}
+              </p>
+            )}
+
+            <Button
+              type="submit"
+              variant="primary"
+              className="h-11 w-full"
+              loading={pending || loading}
+              icon={mode === "entrar" ? <LogIn className="size-4" /> : <UserPlus className="size-4" />}
+            >
+              {mode === "entrar" ? "Entrar" : "Criar conta"}
+            </Button>
+          </form>
+
+          <p className="mt-8 text-xs leading-relaxed text-muted">Seus universos e criaturas ficam visíveis apenas para você.</p>
         </div>
       </div>
     </div>

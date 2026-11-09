@@ -30,19 +30,21 @@ paths:
 
 ## No servidor
 
+- Provedor único: **OpenAI**. Toda chamada passa por `supabase/functions/_shared/openai.ts`; não chame a API em outro lugar nem adicione outro provedor sem pedido.
 - Texto: ação nova vira um `action` em `supabase/functions/ai-creature/index.ts`, reaproveitando `SYSTEM`, `contextBlock` e os esquemas. Não crie outra função para texto.
-- Claude só por `callClaudeJson` (`_shared/claude.ts`): modelo por `ANTHROPIC_MODEL` (padrão `claude-opus-5-5`), streaming, saída JSON por `output_config.format`, `fallbacks: "default"`, tratamento de recusa, de resposta cortada e de erro tipado do SDK.
-- `effort`: `"medium"` para gerar ou alterar fichas; `"low"` para tarefas curtas (redigir o prompt de imagem).
-- Esquema JSON: todo objeto com `additionalProperties: false` e todas as propriedades em `required`. Sem `minimum`, `maximum`, `minLength` ou `maxLength` (não suportados): limite na normalização.
+- `callOpenAIJson` (Responses API) cuida de: modelo por `OPENAI_TEXT_MODEL` (padrão `gpt-6.1-sol`), saída estruturada com `text.format` (`json_schema`, `strict: true`), `reasoning.effort`, `store: false`, tempo-limite, recusa, resposta incompleta e erros HTTP.
+- `effort`: `"medium"` para gerar ou alterar fichas; `"low"` para tarefas curtas.
+- Esquema JSON estrito: todo objeto com `additionalProperties: false` e todas as propriedades em `required`; raiz é objeto. `minItems`/`maxItems` e `minimum`/`maximum` são aceitos; `minLength`/`maxLength` não (corte na normalização).
+- Toda ação de IA chama `consumeQuota(supabase, "text" | "image")` **antes** do provedor (cota diária por usuário em `ai_usage`).
 - Saída do modelo é dado não confiável: passe por `normalizeCreature` (ou equivalente) antes de devolver.
 - Prompts:
-  - em pt-BR (o de imagem, em inglês);
+  - em pt-BR (a moldura do prompt de imagem é em inglês);
   - texto do usuário ou do banco entre tags XML (`<ideia_do_mestre>`, `<universo>`, `<ficha_atual>`, `<pedido_do_mestre>`), com o sistema dizendo que é descrição e não instrução;
   - entradas cortadas com `clip`;
   - modificações deixam explícita a regra de preservar o resto da ficha.
-- Imagem: só em `ai-image`. Modelo por `OPENAI_IMAGE_MODEL` (padrão `gpt-image-1`), WebP 1024×1024, qualidade `medium`. O Claude redige o prompt visual a partir da aparência e do estilo do universo; se falhar, usa o prompt montado da ficha.
+- Imagem: só em `ai-image`, via `generateImage`. Modelo por `OPENAI_IMAGE_MODEL` (padrão `gpt-image-2.5-flare`), WebP 1024×1024, qualidade `medium`. O prompt é montado por `buildImagePrompt` (`_shared/creature.ts`), sem chamada extra de texto.
 - Edição de imagem só com imagem-base dentro da pasta do próprio usuário.
 
 ## Custos
 
-Chamadas reais ao Claude e à OpenAI custam dinheiro. Não rode testes, scripts ou loops que as disparem sem autorização do usuário. Para validar a lógica, use os testes de `src/lib` e os caminhos de erro das funções sem chave configurada.
+Chamadas reais à OpenAI custam dinheiro. Não rode testes, scripts ou loops que as disparem sem autorização do usuário. Para validar a lógica, use os testes de `src/lib` e os caminhos de erro das funções sem chave configurada.

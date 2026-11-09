@@ -9,7 +9,8 @@
 // Nada é salvo aqui: as propostas voltam ao app e só entram no bestiário
 // quando o mestre aceita.
 import { loadUniverse, requireUser } from "../_shared/auth.ts";
-import { callClaudeJson } from "../_shared/claude.ts";
+import { callOpenAIJson } from "../_shared/openai.ts";
+import { consumeQuota } from "../_shared/quota.ts";
 import { CR_TABLE, CREATURE_SCHEMA, describeUniverse, normalizeCreature, TYPES } from "../_shared/creature.ts";
 import { HttpError, json, readJson, serve } from "../_shared/http.ts";
 
@@ -88,6 +89,8 @@ const ALTERNATIVES_SCHEMA = {
   properties: {
     alternatives: {
       type: "array",
+      minItems: 1,
+      maxItems: 3,
       items: {
         type: "object",
         properties: {
@@ -129,6 +132,7 @@ serve(async (req) => {
   if (!body?.universeId) throw new HttpError(400, "Selecione um universo.");
 
   const universe = await loadUniverse(supabase, body.universeId);
+  if (!["generate", "variation", "modify"].includes(body.action)) throw new HttpError(400, "Ação desconhecida.");
   const useContext = body.useUniverseContext !== false;
   const creativity = CREATIVITY[body.creativity ?? "equilibrado"] ?? CREATIVITY.equilibrado;
   const detail = DETAIL[body.detail ?? "padrao"] ?? DETAIL.padrao;
@@ -142,7 +146,10 @@ serve(async (req) => {
     if (!description) throw new HttpError(400, "Descreva a criatura que você imagina.");
     const count = clampCount(body.count);
     const type = body.creatureType && TYPES.includes(body.creatureType as never) ? body.creatureType : null;
-    const avoid = (body.avoidNames ?? []).filter((n) => typeof n === "string").slice(0, 12);
+    const avoid = (Array.isArray(body.avoidNames) ? body.avoidNames : [])
+      .filter((n): n is string => typeof n === "string")
+      .map((n) => clip(n, 120))
+      .slice(0, 12);
 
     const prompt = [
       contextBlock,
@@ -158,7 +165,8 @@ serve(async (req) => {
       'Para cada uma, "concept" resume a proposta em uma frase e "design_notes" explica em 2 a 4 frases as escolhas de equilíbrio (como chegou ao ND) e o que o mestre pode ajustar.',
     ].filter(Boolean).join("\n");
 
-    const result = await callClaudeJson<{ alternatives: Alternative[] }>({ system: SYSTEM, prompt, schema: ALTERNATIVES_SCHEMA });
+    await consumeQuota(supabase, "text");
+    const result = await callOpenAIJson<{ alternatives: Alternative[] }>({ system: SYSTEM, prompt, schemaName: "creature_alternatives", schema: ALTERNATIVES_SCHEMA });
     return json({ alternatives: sanitizeAlternatives(result.alternatives) });
   }
 
@@ -179,7 +187,8 @@ serve(async (req) => {
       '"concept" resume em uma frase o que muda em relação à base; "design_notes" explica as escolhas de equilíbrio.',
     ].join("\n");
 
-    const result = await callClaudeJson<{ alternatives: Alternative[] }>({ system: SYSTEM, prompt, schema: ALTERNATIVES_SCHEMA });
+    await consumeQuota(supabase, "text");
+    const result = await callOpenAIJson<{ alternatives: Alternative[] }>({ system: SYSTEM, prompt, schemaName: "creature_variations", schema: ALTERNATIVES_SCHEMA });
     return json({ alternatives: sanitizeAlternatives(result.alternatives) });
   }
 
@@ -198,7 +207,8 @@ serve(async (req) => {
       'Em "summary", liste em 1 a 4 frases o que você mudou e por quê, para o mestre revisar antes de aplicar.',
     ].join("\n");
 
-    const result = await callClaudeJson<{ summary: string; creature: unknown }>({ system: SYSTEM, prompt, schema: MODIFY_SCHEMA });
+    await consumeQuota(supabase, "text");
+    const result = await callOpenAIJson<{ summary: string; creature: unknown }>({ system: SYSTEM, prompt, schemaName: "creature_modification", schema: MODIFY_SCHEMA });
     return json({ summary: clip(result.summary, 2000), creature: normalizeCreature(result.creature) });
   }
 

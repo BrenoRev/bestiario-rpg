@@ -69,6 +69,6 @@ export async function generateCreatureImage(opts: {
   creature: CreatureDraft;
   instruction?: string;
   baseImagePath?: string | null;
-}): Promise<{ image: CreatureImage; signedUrl: string | null }> {
+}): Promise<{ image: CreatureImage }> {
   return invoke("ai-image", opts);
 }

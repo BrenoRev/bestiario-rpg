@@ -208,7 +208,6 @@ export function CreatureEditorPage() {
         title="Sair sem salvar?"
         message="As alterações desta ficha serão perdidas."
         confirmLabel="Sair sem salvar"
-        danger
         onConfirm={() => blocker.proceed?.()}
         onClose={() => blocker.reset?.()}
       />

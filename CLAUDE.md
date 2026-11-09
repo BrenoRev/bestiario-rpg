@@ -41,8 +41,9 @@ As regras por tema ficam em `.claude/rules/`. As marcadas "sempre" carregam em t
 - Usar a service role key, no frontend ou nas Edge Functions.
 - Editar uma migração que já existe. Toda mudança de banco é uma migração nova.
 - Aplicar sugestão da IA sem revisão do usuário, deixar a IA alterar `notes` ou `image_path`, ou gerar imagem sem clique explícito.
-- Trocar o provedor ou o modelo de IA no código. O modelo vem das variáveis de ambiente.
-- Cor em hex, fonte ou sombra fora de `src/index.css`. A única exceção é o botão "Entrar com Google", que segue a identidade visual do Google.
+- Adicionar outro provedor de IA (o projeto usa só a OpenAI) ou fixar modelo no código. Os modelos vêm das variáveis de ambiente.
+- Cor em hex, fonte ou sombra fora de `src/index.css`.
+- Adicionar login social / OAuth ou outro método de autenticação.
 - Texto de interface em inglês, `alert()`, `confirm()` ou `prompt()`.
 
 ## Stack (fixa)
@@ -50,10 +51,10 @@ As regras por tema ficam em `.claude/rules/`. As marcadas "sempre" carregam em t
 | Camada | Tecnologia |
 |---|---|
 | Frontend | React 19, TypeScript estrito, Vite, Tailwind CSS 4, React Router 7 (data router), TanStack Query 5, lucide-react |
-| Auth | Supabase Auth, só Google (provedor de e-mail desativado) |
+| Auth | Supabase Auth com e-mail e senha (cadastro e login básicos, sem OAuth) |
 | Banco | Supabase Postgres com RLS em todas as tabelas |
 | Arquivos | Supabase Storage, bucket privado `bestiario`, URLs assinadas |
-| IA | Edge Functions em Deno: Claude (texto, saída JSON estruturada) e OpenAI Images (ilustração) |
+| IA | Somente OpenAI, via Edge Functions em Deno: Responses API (texto com saída JSON estruturada) e Image API (ilustração), com cota diária por usuário |
 | Testes | Vitest para a lógica pura em `src/lib` |
 
 ## Comandos
@@ -62,10 +63,11 @@ As regras por tema ficam em `.claude/rules/`. As marcadas "sempre" carregam em t
 |---|---|
 | `npm run dev` | app em http://localhost:5173 (precisa de `.env.local`) |
 | `npm run typecheck` | checagem de tipos do frontend |
-| `npm test` | testes unitários |
+| `npm test` | testes unitários (inclui a consistência dos enums entre frontend, funções e banco) |
+| `npm run test:rls` | teste de segurança (RLS, Storage, cota) contra o Supabase local |
 | `npm run build` | tipos + build de produção |
 | `npm run check:functions` | checagem de tipos das Edge Functions (Deno via Docker) |
-| `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=x SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=x npx supabase start` | sobe o Supabase local (Docker) e aplica as migrações |
+| `npx supabase start` | sobe o Supabase local (Docker) e aplica as migrações |
 | `npx supabase db reset` | reaplica todas as migrações do zero no banco local |
 
 ## Mapa do repositório
@@ -120,7 +122,7 @@ Interface, comentários e documentação em **português do Brasil**; identifica
 
 - [ ] `npm run typecheck`, `npm test` e `npm run build` passam.
 - [ ] Mexeu em `supabase/functions/`: `npm run check:functions` passa.
-- [ ] Mexeu em `supabase/migrations/`: `npx supabase db reset` aplica sem erro no banco local.
+- [ ] Mexeu em `supabase/migrations/`: `npx supabase db reset` aplica sem erro e `npm run test:rls` passa.
 - [ ] Lógica nova em `src/lib/` tem teste em `*.test.ts` ao lado.
 - [ ] Tela nova ou alterada tem estado de carregamento, de erro e de vazio, e funciona a 390 px de largura sem rolagem horizontal.
 - [ ] Ação destrutiva pede confirmação com `ConfirmDialog`; ação com rede mostra carregamento e trata erro com toast.

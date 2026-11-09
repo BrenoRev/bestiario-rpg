@@ -1,9 +1,9 @@
 import { BookOpen, Globe2, Menu, Settings, Sparkles, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router";
 import { useCurrentUniverse } from "../../context/UniverseContext";
 import { Logo, StoredImage } from "../brand";
-import { cx, IconButton } from "../ui";
+import { cx, IconButton, PageLoader } from "../ui";
 import { Topbar } from "./Topbar";
 
 const NAV = [
@@ -101,7 +101,9 @@ export function AppLayout() {
           }
         />
         <main className="mx-auto w-full max-w-[1280px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-          <Outlet />
+          <Suspense fallback={<PageLoader />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

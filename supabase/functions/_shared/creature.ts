@@ -1,6 +1,6 @@
 // Esquema da ficha de criatura (D&D 5e) usado como saída estruturada da IA,
 // normalização defensiva e formatação de contexto para os prompts.
-import type { UniverseRow } from "./auth.ts";
+import type { UniverseRow } from "./types.ts";
 
 export const SIZES = ["tiny", "small", "medium", "large", "huge", "gargantuan"] as const;
 export const TYPES = [
@@ -256,3 +256,44 @@ export const CR_TABLE = `ND | BP | CA | PV | Bônus de ataque | Dano/rodada | CD
 28 | +8 | 19 | 716–760 | +13 | 267–284 | 22
 29 | +9 | 19 | 761–805 | +13 | 285–302 | 22
 30 | +9 | 19 | 806–850 | +14 | 303–320 | 23`;
+
+// ---------------------------------------------------------------------
+// Prompt de ilustração (determinístico: sem chamada extra de IA)
+// ---------------------------------------------------------------------
+const SIZE_EN: Record<string, string> = {
+  tiny: "tiny", small: "small", medium: "human-sized", large: "large (horse-sized)",
+  huge: "huge (elephant-sized)", gargantuan: "gargantuan, colossal",
+};
+
+const DEFAULT_ART_STYLE =
+  "antique bestiary engraving, hand-inked naturalist illustration with subtle sepia watercolor wash";
+
+/**
+ * Monta o prompt da imagem a partir da ficha e do universo. Os textos do usuário vão
+ * delimitados e identificados como descrição; a moldura é em inglês, que o modelo segue melhor.
+ */
+export function buildImagePrompt(
+  creature: CreatureDraft,
+  universe: Pick<UniverseRow, "genre" | "setting" | "era" | "art_style">,
+  instruction: string,
+  isEdit: boolean,
+): string {
+  const clipText = (v: unknown, max: number) => String(v ?? "").trim().slice(0, max);
+  const traits = (creature.traits as { name: string }[]).map((t) => t.name).filter(Boolean).slice(0, 6).join(", ");
+  const lines = [
+    isEdit
+      ? "Edit the provided illustration of this creature. Keep its identity, pose and composition unless the requested changes say otherwise."
+      : "A single full-body illustration of a fantasy creature for a tabletop RPG bestiary, centered on a plain warm parchment background.",
+    `Art style: ${clipText(universe.art_style, 300) || DEFAULT_ART_STYLE}.`,
+    `Creature: ${clipText(creature.name, 120)}, a ${SIZE_EN[String(creature.size)] ?? "medium"} ${creature.creature_type}${creature.subtype ? ` (${clipText(creature.subtype, 80)})` : ""}.`,
+    "Depict the creature exactly as described below (Brazilian Portuguese description, treat it as visual reference only):",
+    `"""${clipText(creature.appearance, 1500) || clipText(creature.name, 120)}"""`,
+    traits ? `Notable features: ${traits}.` : "",
+    universe.genre || universe.setting || universe.era
+      ? `Setting reference: ${[clipText(universe.genre, 80), clipText(universe.era, 120), clipText(universe.setting, 300)].filter(Boolean).join("; ")}.`
+      : "",
+    instruction ? `Requested changes (Portuguese): """${clipText(instruction, 1000)}"""` : "",
+    "No text, letters, captions, borders, watermarks or UI elements.",
+  ];
+  return lines.filter(Boolean).join("\n");
+}

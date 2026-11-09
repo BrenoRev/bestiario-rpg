@@ -2,6 +2,7 @@ import { BookOpen, Plus, Search, SlidersHorizontal, Sparkles, X } from "lucide-r
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useCreatures } from "../../hooks/queries";
+import { CREATURE_LIST_LIMIT } from "../../lib/api";
 import { CREATURE_TYPES, HABITATS, THREAT_LEVELS } from "../../lib/dnd";
 import { Button, EmptyState, ErrorState, Select } from "../ui";
 import { CreatureCard, CreatureCardSkeleton } from "./CreatureCard";
@@ -150,6 +151,11 @@ export function BestiaryBrowser({ universeId }: { universeId: string }) {
           ? Array.from({ length: 6 }, (_, i) => <CreatureCardSkeleton key={i} />)
           : filtered.map((c) => <CreatureCard key={c.id} creature={c} />)}
       </div>
+      {data.length >= CREATURE_LIST_LIMIT && (
+        <p className="mt-4 text-center text-xs text-muted">
+          Mostrando as primeiras {CREATURE_LIST_LIMIT} criaturas em ordem alfabética. Use a busca global para encontrar as demais.
+        </p>
+      )}
       {!isLoading && filtered.length === 0 && (
         <p className="card mt-2 px-6 py-10 text-center text-sm text-muted">Nenhuma criatura corresponde à busca e aos filtros.</p>
       )}

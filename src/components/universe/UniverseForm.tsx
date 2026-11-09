@@ -1,5 +1,5 @@
 import { ImagePlus, Trash2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { UniverseInput } from "../../lib/types";
 import { StoredImage } from "../brand";
 import { Button, Segmented, TextArea, TextInput } from "../ui";
@@ -23,11 +23,13 @@ interface Props {
 export function UniverseForm({ value, onChange, coverFile, onCoverFile }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  useEffect(() => () => {
+    if (preview) URL.revokeObjectURL(preview);
+  }, [preview]);
   const set = <K extends keyof UniverseInput>(k: K, v: UniverseInput[K]) => onChange({ ...value, [k]: v });
 
   const pick = (f: File | null) => {
     onCoverFile(f);
-    if (preview) URL.revokeObjectURL(preview);
     setPreview(f ? URL.createObjectURL(f) : null);
   };
 

@@ -7,7 +7,6 @@ export const isSupabaseConfigured = Boolean(url && anonKey);
 
 export const supabase = createClient(url ?? "http://localhost:54321", anonKey ?? "missing-anon-key", {
   auth: {
-    flowType: "pkce",
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,

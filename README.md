@@ -4,50 +4,91 @@ Plataforma web para mestres de RPG criarem e organizarem bestiários por univers
 
 ## Funcionalidades
 
-- **Login exclusivo com Google** (Supabase Auth, OAuth com PKCE). Sem cadastro por e-mail e senha.
+- **Cadastro e login com e-mail e senha** (Supabase Auth). Senha com pelo menos 8 caracteres e mensagens de erro em português.
 - **Meus Mundos**: universos com capa, gênero, ambientação, época, nível de fantasia, regras particulares e estilo visual. Cada um tem o próprio bestiário.
 - **Criaturas**: grade com busca por nome, filtros por categoria, habitat e nível de ameaça, e ordenação (A–Z, Z–A, ND, recentes).
-- **Ficha D&D 5e completa**: informações gerais, atributos, combate, testes de resistência, perícias, resistências e imunidades, sentidos, idiomas, traços, ações, ações bônus, reações, ações lendárias, habilidades especiais e a crônica narrativa. A parte mecânica e a narrativa são visualmente separadas. Há calculadoras (PV pelos dados de vida, bônus de perícias e resistências, BP pelo ND) e a referência de equilíbrio do Guia do Mestre para o ND escolhido.
+- **Ficha D&D 5e completa**:
+  - informações gerais, atributos, combate, testes de resistência, perícias, resistências e imunidades, sentidos e idiomas;
+  - traços, ações, ações bônus, reações, ações lendárias, habilidades especiais e a crônica narrativa;
+  - a parte mecânica e a narrativa são visualmente separadas;
+  - calculadoras de PV e de bônus, e a referência de equilíbrio do Guia do Mestre para o ND.
 - **Criar, editar, duplicar e excluir** fichas, com confirmação e aviso de alterações não salvas.
-- **Criar com IA**: descrição livre e configurações (tipo, ND, criatividade, detalhamento, número de propostas, contexto do universo). As propostas aparecem em abas e podem ser salvas, descartadas, combinadas (campo a campo), modificadas, editadas à mão, ilustradas, ou servir de base para novas alternativas e variações.
-- **IA dentro da ficha**: pedidos rápidos (novas habilidades, fraquezas, comportamento mais ameaçador, adaptar ao universo, coerência com a ambientação, equilibrar o ND) ou pedido livre com foco num campo. Toda sugestão chega como **diferença campo a campo**. O mestre marca o que aplicar e o resto da ficha fica intacto.
-- **Ilustrações por IA**, só quando pedidas: gerar, gerar novas versões, pedir alterações por texto (inclusive editando a imagem atual), comparar versões, aceitar, substituir, remover ou enviar a própria imagem. A imagem escolhida fica no Supabase Storage, vinculada à ficha.
+- **Criar com IA**: descrição livre e configurações (tipo, ND, criatividade, detalhamento, número de propostas, contexto do universo). As propostas aparecem em abas e podem ser salvas, descartadas, combinadas campo a campo, modificadas, editadas à mão, ilustradas, ou virar base de novas alternativas e variações.
+- **IA dentro da ficha**: pedidos rápidos ou pedido livre com foco num campo. Toda sugestão chega como **diferença campo a campo**, e o mestre escolhe o que aplicar.
+- **Ilustrações por IA**, só quando pedidas: gerar, novas versões, alterações por texto (inclusive editando a imagem atual), comparar, aceitar, substituir, remover ou enviar a própria imagem.
 
 ## Arquitetura
 
 | Camada | Tecnologia |
 |---|---|
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, React Router, TanStack Query, lucide-react |
-| Autenticação | Supabase Auth, provedor Google |
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, React Router 7, TanStack Query, lucide-react |
+| Autenticação | Supabase Auth com e-mail e senha |
 | Banco de dados | Supabase Postgres com Row Level Security |
 | Arquivos | Supabase Storage (bucket privado `bestiario`, URLs assinadas) |
-| IA (texto) | Claude (`claude-opus-5-5`) via Edge Function `ai-creature`, com saída JSON estruturada |
-| IA (imagens) | OpenAI Images (`gpt-image-1`) via Edge Function `ai-image`; o Claude redige o prompt visual a partir da ficha e do universo |
+| IA (texto) | OpenAI Responses API (`gpt-6.1-sol` por padrão), via Edge Function `ai-creature`, com saída JSON estruturada estrita |
+| IA (imagens) | OpenAI Image API (`gpt-image-2.5-flare` por padrão), via Edge Function `ai-image` |
 
-As chaves de IA ficam **só** nos secrets das Edge Functions. O navegador envia apenas o JWT do usuário. As funções usam um cliente Supabase autenticado como o próprio usuário, então toda leitura e escrita delas também passa pela RLS.
+```mermaid
+flowchart LR
+  subgraph Navegador
+    UI[React + TanStack Query]
+  end
+  subgraph Supabase
+    Auth[Auth - e-mail e senha]
+    DB[(Postgres + RLS)]
+    ST[(Storage privado)]
+    F1[ai-creature]
+    F2[ai-image]
+  end
+  OAI[OpenAI API]
+
+  UI -- login --> Auth
+  UI -- leituras e gravações com o JWT do usuário --> DB
+  UI -- upload e URLs assinadas --> ST
+  UI -- propostas de ficha --> F1
+  UI -- pedido de ilustração --> F2
+  F1 -- cota em ai_usage --> DB
+  F2 -- cota e versão da imagem --> DB
+  F2 -- arquivo WebP --> ST
+  F1 -- Responses API --> OAI
+  F2 -- Image API --> OAI
+```
+
+**Segurança em camadas**
+- A chave da OpenAI fica **só** nos secrets das Edge Functions; o navegador envia apenas o JWT do usuário.
+- As funções usam um cliente Supabase autenticado como o próprio usuário, então até elas passam pela RLS.
+- Cada usuário tem uma **cota diária** de pedidos de IA (texto e imagem), registrada em `ai_usage`. Ninguém consegue apagar o próprio histórico para burlar a cota.
+- As funções recusam corpos acima de 256 KB e podem restringir as origens com `ALLOWED_ORIGINS`.
+
+**A IA propõe, o mestre decide.** As funções nunca gravam fichas: devolvem propostas, e o app só salva o que o mestre aceitar. Notas do mestre e imagem nunca são alteradas pela IA.
+
+### Estrutura
 
 ```
 src/
+  pages/           telas (carregadas sob demanda, uma por rota)
   components/      UI reutilizável, layout, ficha, editor, IA, imagens, universo
-  context/         sessão (Google) e universo atual
+  context/         sessão (e-mail e senha) e universo atual
   hooks/queries.ts consultas com TanStack Query
-  lib/             tipos, regras de D&D 5e, acesso a dados, cliente de IA
-  pages/           telas (login, mundos, criaturas, ficha, editor, Criar com IA, configurações)
+  lib/             tipos, regras de D&D 5e, acesso a dados, cliente de IA, testes
 supabase/
-  migrations/      esquema, RLS, bucket e políticas de Storage
+  migrations/      esquema, RLS, Storage, cota de IA
   functions/
-    _shared/       auth, HTTP, esquema da ficha, chamada ao Claude
+    _shared/       auth, HTTP, cota, adaptador da OpenAI, esquema da ficha
     ai-creature/   gerar, variar e modificar criaturas
     ai-image/      gerar e editar ilustrações
+  tests/           teste de integração de segurança (RLS, Storage, cota)
+.claude/rules/     regras de padronização para agentes de IA (ver CLAUDE.md)
+.github/           CI de Pull Request e modelo de PR
 ```
 
-### Dados e segurança
+### Dados
 
-- `profiles` é criado automaticamente no primeiro login, por trigger, com nome e foto da conta Google, e guarda as preferências de IA.
-- `universes` pertence ao usuário (`user_id = auth.uid()`).
-- `creatures` guarda a ficha D&D 5e. Na inserção e na atualização, a política exige que o universo de destino também seja do usuário.
-- `creature_images` guarda as versões de ilustração. A escolhida fica em `creatures.image_path`.
-- Storage: arquivos em `<user_id>/<universe_id>/...`, e as políticas só liberam a pasta do próprio usuário.
+- `profiles` nasce no cadastro (trigger) com o nome informado; o usuário só altera o nome de exibição e as preferências de IA.
+- `universes`, `creatures` e `creature_images` pertencem ao usuário (`user_id = auth.uid()`). Criaturas e versões só podem ser gravadas em universos do próprio usuário.
+- `creature_images` guarda as versões de ilustração; a escolhida fica em `creatures.image_path`.
+- `ai_usage` registra cada pedido à IA para a cota diária.
+- Storage: arquivos em `<user_id>/<universe_id>/...`; as políticas só liberam a pasta do próprio usuário.
 
 ## Como rodar
 
@@ -55,8 +96,8 @@ supabase/
 
 - Node.js 20 ou superior
 - Um projeto no [Supabase](https://supabase.com) e o [Supabase CLI](https://supabase.com/docs/guides/cli) (`npx supabase` funciona)
-- Chaves da [Anthropic](https://console.anthropic.com) e da [OpenAI](https://platform.openai.com) (imagens)
-- Um projeto no Google Cloud para o OAuth
+- Uma chave da [OpenAI](https://platform.openai.com)
+- Docker, para o Supabase local e para `npm run check:functions`
 
 ### 2. Banco de dados
 
@@ -66,24 +107,31 @@ npx supabase link --project-ref SEU_PROJECT_REF
 npx supabase db push            # aplica supabase/migrations
 ```
 
-### 3. Login com Google
+### 3. Autenticação
 
-1. No Google Cloud Console, em **APIs e serviços → Credenciais**, crie um **ID do cliente OAuth** do tipo *Aplicativo da Web*.
-2. Em *URIs de redirecionamento autorizados*, adicione `https://SEU_PROJECT_REF.supabase.co/auth/v1/callback`.
-3. No Supabase, em **Authentication → Sign In / Providers → Google**, ative o provedor e cole o Client ID e o Client Secret.
-4. Em **Authentication → URL Configuration**, defina o *Site URL* (ex.: `http://localhost:5173` em desenvolvimento) e adicione `http://localhost:5173/auth/callback`, mais a URL de produção com `/auth/callback`, em *Redirect URLs*.
-5. Em **Authentication → Sign In / Providers → Email**, desative o provedor de e-mail para que o acesso seja só pelo Google.
+No painel do Supabase, em **Authentication → Sign In / Providers → Email**:
+1. Deixe o provedor **Email** ativo, com cadastro permitido.
+2. Desative **Confirm email** para o fluxo básico (a conta entra logada logo após o cadastro). Se preferir manter a confirmação, o app já avisa o usuário para confirmar pelo link antes de entrar.
+3. Em **Authentication → Policies**, defina a senha mínima em 8 caracteres (o app valida o mesmo).
+4. Em **Authentication → URL Configuration**, defina o *Site URL* com a URL do app.
 
 ### 4. Edge Functions (IA)
 
 ```bash
-cp supabase/functions/.env.example supabase/functions/.env   # preencha as chaves
+cp supabase/functions/.env.example supabase/functions/.env   # preencha OPENAI_API_KEY
 npx supabase secrets set --env-file supabase/functions/.env
 npx supabase functions deploy ai-creature
 npx supabase functions deploy ai-image
 ```
 
-Variáveis opcionais: `ANTHROPIC_MODEL` (padrão `claude-opus-5-5`) e `OPENAI_IMAGE_MODEL` (padrão `gpt-image-1`).
+| Variável | Padrão | Para quê |
+|---|---|---|
+| `OPENAI_API_KEY` | (obrigatória) | chave da OpenAI |
+| `OPENAI_TEXT_MODEL` | `gpt-6.1-sol` | modelo de texto; precisa aceitar saída estruturada e `reasoning.effort` |
+| `OPENAI_IMAGE_MODEL` | `gpt-image-2.5-flare` | modelo de imagem |
+| `AI_DAILY_TEXT_LIMIT` | `40` | pedidos de texto por usuário a cada 24 horas |
+| `AI_DAILY_IMAGE_LIMIT` | `15` | imagens por usuário a cada 24 horas |
+| `ALLOWED_ORIGINS` | (vazio = qualquer) | origens que podem chamar as funções, separadas por vírgula |
 
 ### 5. Frontend
 
@@ -93,20 +141,18 @@ npm install
 npm run dev                     # http://localhost:5173
 ```
 
-Para produção, `npm run build` gera `dist/`, que pode ser publicado em qualquer hospedagem estática (Vercel, Netlify, Cloudflare Pages). Configure a hospedagem para reescrever todas as rotas para `index.html` (SPA) e acrescente a URL de produção nas Redirect URLs do Supabase.
+Para produção, `npm run build` gera `dist/`, que pode ir para qualquer hospedagem estática (Vercel, Netlify, Cloudflare Pages). Configure a hospedagem para reescrever todas as rotas para `index.html` (SPA), acrescente a URL de produção nas Redirect URLs do Supabase e em `ALLOWED_ORIGINS`.
 
 ### Desenvolvimento local com o Supabase CLI
 
-`supabase/config.toml` já traz o Google habilitado e o login por e-mail desativado:
+`supabase/config.toml` já vem com cadastro e login por e-mail e senha, sem confirmação de e-mail:
 
 ```bash
-export SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=...
-export SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=...
 npx supabase start                                    # Postgres, Auth, Storage, Edge Runtime (Docker)
 npx supabase functions serve --env-file supabase/functions/.env
 ```
 
-No Google Cloud, adicione também `http://127.0.0.1:54321/auth/v1/callback` como URI de redirecionamento.
+Use a URL e a anon key mostradas pelo `supabase start` no `.env.local`.
 
 ## Scripts
 
@@ -114,15 +160,31 @@ No Google Cloud, adicione também `http://127.0.0.1:54321/auth/v1/callback` como
 |---|---|
 | `npm run dev` | servidor de desenvolvimento |
 | `npm run build` | checagem de tipos e build de produção |
-| `npm test` | testes unitários (regras de D&D 5e e revisão de alterações da IA) |
 | `npm run typecheck` | só a checagem de tipos |
+| `npm test` | testes unitários: regras de D&D, revisão de alterações da IA, consistência dos enums entre frontend, funções e banco, normalização da saída da IA e prompt de imagem |
+| `npm run test:rls` | teste de integração de segurança contra o Supabase local (rode `npx supabase start` antes) |
+| `npm run check:functions` | checagem de tipos das Edge Functions (Deno via Docker), igual ao CI |
+
+## Integração contínua
+
+Todo Pull Request e todo push na `main` rodam `.github/workflows/ci.yml`, com três jobs:
+- **Frontend**: tipos, testes unitários e build.
+- **Edge Functions**: `deno check`.
+- **Banco**: migrações do zero e `npm run test:rls`.
+
+Recomenda-se proteger a `main` no GitHub exigindo esses três checks.
+
+## Desenvolvendo com IA
+
+O repositório é **IA-first**. O `CLAUDE.md` traz as regras gerais, e `.claude/rules/` traz as regras por tema: código, textos, design, frontend, ficha de D&D, IA, banco, Edge Functions, segurança, testes e git. Elas valem para pessoas e agentes: siga o padrão existente e não crie padrão novo sem combinar.
 
 ## Notas sobre a IA
 
-- A geração de texto usa saída estruturada (JSON Schema) e um guia de equilíbrio com a tabela de estatísticas por ND do Guia do Mestre. O ND final é tratado como a média do ND defensivo e do ofensivo.
-- Na modificação, a IA devolve a ficha inteira e o app calcula a diferença. O mestre vê cada campo alterado lado a lado com o atual. Notas do mestre e imagem nunca são alteradas pela IA.
-- As chamadas ao Claude usam `fallbacks: "default"`: se um classificador de segurança recusar um pedido legítimo por engano, a API refaz a chamada no modelo de fallback recomendado. Para desligar, remova `betas` e `fallbacks` em `supabase/functions/_shared/claude.ts`.
-- Cada geração de imagem consome créditos da OpenAI (qualidade `medium`, 1024×1024, WebP). Nada é gerado sem um clique do usuário.
+- O texto usa saída estruturada estrita (JSON Schema) e um guia de equilíbrio com a tabela de estatísticas por ND do Guia do Mestre.
+- Na modificação, a IA devolve a ficha inteira e o app calcula a diferença. O mestre vê cada campo alterado lado a lado com o atual.
+- As chamadas usam `store: false` (o conteúdo não fica guardado na OpenAI) e tempo-limite de 140 s.
+- O prompt da imagem é montado a partir da ficha e do estilo do universo, sem chamada extra de texto. Nada é gerado sem um clique do usuário.
+- Ilustrações de propostas descartadas são apagadas na hora; as abandonadas são recolhidas depois de 7 dias.
 - Tipos de criatura: além dos 13 tipos pedidos, o sistema inclui **Humanoide**, que também é tipo oficial de D&D 5e.
 
 ## Próximas versões

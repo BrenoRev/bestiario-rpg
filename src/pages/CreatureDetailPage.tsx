@@ -163,7 +163,6 @@ export function CreatureDetailPage() {
         title={`Excluir “${creature.name}”?`}
         message="A ficha e todas as versões da ilustração serão apagadas permanentemente."
         confirmLabel="Excluir criatura"
-        danger
         loading={busy === "delete"}
         onConfirm={remove}
         onClose={() => setConfirmDelete(false)}

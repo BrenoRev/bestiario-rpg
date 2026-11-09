@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Compass } from "lucide-react";
-import { createBrowserRouter, Link, Navigate, Outlet, RouterProvider, useLocation, useParams } from "react-router";
+import { Compass, TriangleAlert } from "lucide-react";
+import type { ComponentType } from "react";
+import { lazy } from "react";
+import { createBrowserRouter, Link, Navigate, Outlet, RouterProvider, useLocation, useParams, useRouteError } from "react-router";
 import { Logo } from "./components/brand";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ToastProvider } from "./components/Toast";
@@ -8,16 +10,21 @@ import { Button, EmptyState, PageLoader } from "./components/ui";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { UniverseProvider } from "./context/UniverseContext";
 import { isSupabaseConfigured } from "./lib/supabase";
-import { AuthCallbackPage } from "./pages/AuthCallbackPage";
-import { CreateWithAIPage } from "./pages/CreateWithAIPage";
-import { CreatureDetailPage } from "./pages/CreatureDetailPage";
-import { CreatureEditorPage } from "./pages/CreatureEditorPage";
-import { CreaturesPage } from "./pages/CreaturesPage";
 import { LoginPage } from "./pages/LoginPage";
-import { SettingsPage } from "./pages/SettingsPage";
-import { UniverseFormPage } from "./pages/UniverseFormPage";
-import { UniversePage } from "./pages/UniversePage";
-import { WorldsPage } from "./pages/WorldsPage";
+
+/** Carrega a página só quando a rota é aberta (divide o pacote por tela). */
+function page<K extends string>(loader: () => Promise<Record<K, ComponentType>>, name: K) {
+  return lazy(() => loader().then((m) => ({ default: m[name] })));
+}
+
+const WorldsPage = page(() => import("./pages/WorldsPage"), "WorldsPage");
+const UniverseFormPage = page(() => import("./pages/UniverseFormPage"), "UniverseFormPage");
+const UniversePage = page(() => import("./pages/UniversePage"), "UniversePage");
+const CreaturesPage = page(() => import("./pages/CreaturesPage"), "CreaturesPage");
+const CreatureDetailPage = page(() => import("./pages/CreatureDetailPage"), "CreatureDetailPage");
+const CreatureEditorPage = page(() => import("./pages/CreatureEditorPage"), "CreatureEditorPage");
+const CreateWithAIPage = page(() => import("./pages/CreateWithAIPage"), "CreateWithAIPage");
+const SettingsPage = page(() => import("./pages/SettingsPage"), "SettingsPage");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,7 +43,7 @@ function Root() {
   );
 }
 
-/** Área autenticada: exige sessão Google. */
+/** Área autenticada: exige sessão (e-mail e senha). */
 function RequireAuth() {
   const { user, loading } = useAuth();
   const location = useLocation();
@@ -61,6 +68,31 @@ function EditorRoute() {
   return <CreatureEditorPage key={creatureId ?? "nova"} />;
 }
 
+/** Erro inesperado de renderização ou de carregamento de rota: evita a tela em branco. */
+function RouteError() {
+  const error = useRouteError();
+  console.error(error);
+  return (
+    <div className="flex min-h-screen items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        <EmptyState
+          icon={<TriangleAlert className="size-6" />}
+          title="Algo deu errado"
+          description="Esta tela encontrou um erro inesperado. Recarregue a página; se continuar, volte ao início."
+          action={
+            <div className="flex justify-center gap-2">
+              <Button onClick={() => window.location.reload()}>Recarregar</Button>
+              <Button variant="primary" onClick={() => window.location.assign("/")}>
+                Ir para o início
+              </Button>
+            </div>
+          }
+        />
+      </div>
+    </div>
+  );
+}
+
 function NotFound() {
   return (
     <EmptyState
@@ -79,9 +111,9 @@ function NotFound() {
 const router = createBrowserRouter([
   {
     element: <Root />,
+    errorElement: <RouteError />,
     children: [
       { path: "/login", element: <LoginPage /> },
-      { path: "/auth/callback", element: <AuthCallbackPage /> },
       {
         element: <RequireAuth />,
         children: [

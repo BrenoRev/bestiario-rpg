@@ -53,13 +53,18 @@ export async function updateUniverse(id: string, input: Partial<UniverseInput>):
 
 export async function deleteUniverse(universe: Universe): Promise<void> {
   const uid = await currentUserId();
-  // Arquivos primeiro (capa e todas as imagens do universo), depois as linhas.
-  await removeFolder(`${uid}/${universe.id}`);
+  // Lista os arquivos, apaga as linhas (cascata) e só então os arquivos: se o banco
+  // falhar, nenhuma ficha fica apontando para imagem apagada.
+  const files = await listFolder(`${uid}/${universe.id}`);
   const { error } = await supabase.from("universes").delete().eq("id", universe.id);
   if (error) fail(error, "Não foi possível excluir o universo.");
+  await removeFiles(files);
 }
 
 // ---------------------------------------------------------------- Criaturas
+/** Teto de linhas por consulta do PostgREST (max_rows). A listagem avisa quando chega nele. */
+export const CREATURE_LIST_LIMIT = 1000;
+
 const SUMMARY_COLUMNS =
   "id, universe_id, name, size, creature_type, challenge_rating, cr_value, habitat_tags, image_path, updated_at";
 
@@ -68,7 +73,8 @@ export async function listCreatures(universeId: string): Promise<CreatureSummary
     .from("creatures")
     .select(SUMMARY_COLUMNS)
     .eq("universe_id", universeId)
-    .order("name");
+    .order("name")
+    .limit(CREATURE_LIST_LIMIT);
   if (error) fail(error, "Não foi possível carregar o bestiário.");
   return (data ?? []) as CreatureSummary[];
 }
@@ -177,14 +183,35 @@ export async function deleteCreatureImage(image: CreatureImage): Promise<void> {
 }
 
 const MIME_EXT: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+const MAX_IMAGE_SIDE = 1600;
+
+/** Reduz a imagem para no máximo 1600 px no maior lado, em WebP. Fotos de vários MB viram poucas centenas de KB. */
+async function prepareImage(file: File): Promise<Blob> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.88));
+    // Sem redução e sem ganho de tamanho: mantém o original.
+    if (!blob || !MIME_EXT[blob.type] || (scale === 1 && blob.size >= file.size)) return file;
+    return blob;
+  } catch {
+    return file; // navegador sem suporte: envia como está
+  }
+}
 
 export async function uploadImage(file: File, universeId: string, folder: "images" | "covers"): Promise<string> {
-  const ext = MIME_EXT[file.type];
-  if (!ext) throw new Error("Use uma imagem PNG, JPG ou WebP.");
-  if (file.size > 10 * 1024 * 1024) throw new Error("A imagem deve ter no máximo 10 MB.");
+  if (!MIME_EXT[file.type]) throw new Error("Use uma imagem PNG, JPG ou WebP.");
+  const image = await prepareImage(file);
+  if (image.size > MAX_UPLOAD_BYTES) throw new Error("A imagem deve ter no máximo 10 MB.");
   const uid = await currentUserId();
-  const path = `${uid}/${universeId}/${folder}/${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type });
+  const path = `${uid}/${universeId}/${folder}/${crypto.randomUUID()}.${MIME_EXT[image.type]}`;
+  const { error } = await supabase.storage.from(BUCKET).upload(path, image, { contentType: image.type });
   if (error) fail(error, "Falha ao enviar a imagem.");
   return path;
 }
@@ -212,7 +239,7 @@ export async function removeFile(path: string | null | undefined): Promise<void>
   if (path) await supabase.storage.from(BUCKET).remove([path]);
 }
 
-async function removeFolder(prefix: string): Promise<void> {
+async function listFolder(prefix: string): Promise<string[]> {
   const files: string[] = [];
   const walk = async (dir: string) => {
     const { data } = await supabase.storage.from(BUCKET).list(dir, { limit: 1000 });
@@ -223,20 +250,86 @@ async function removeFolder(prefix: string): Promise<void> {
     }
   };
   await walk(prefix);
-  for (let i = 0; i < files.length; i += 100) {
-    await supabase.storage.from(BUCKET).remove(files.slice(i, i + 100));
+  return files;
+}
+
+async function removeFiles(paths: string[]): Promise<void> {
+  for (let i = 0; i < paths.length; i += 100) {
+    await supabase.storage.from(BUCKET).remove(paths.slice(i, i + 100));
   }
 }
 
-const signedCache = new Map<string, { url: string; expires: number }>();
+/** Apaga versões de ilustração que ainda não pertencem a nenhuma criatura (proposta descartada). */
+export async function deleteDraftImages(images: CreatureImage[]): Promise<void> {
+  const drafts = images.filter((i) => !i.creature_id);
+  if (!drafts.length) return;
+  const { error } = await supabase.from("creature_images").delete().in("id", drafts.map((i) => i.id)).is("creature_id", null);
+  if (error) return console.error(error);
+  await removeFiles(drafts.map((i) => i.path));
+}
 
-export async function signedUrl(path: string): Promise<string> {
+/**
+ * Coleta de lixo preguiçosa: versões de rascunho abandonadas há mais de `days` dias
+ * (sessões de "Criar com IA" nunca salvas). Nunca apaga imagem em uso por uma ficha.
+ */
+export async function cleanupOrphanImages(days = 7): Promise<void> {
+  const before = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  const { data } = await supabase
+    .from("creature_images")
+    .select("id, path")
+    .is("creature_id", null)
+    .lt("created_at", before)
+    .limit(200);
+  if (!data?.length) return;
+  const { data: used } = await supabase.from("creatures").select("image_path").in("image_path", data.map((d) => d.path));
+  const inUse = new Set((used ?? []).map((u) => u.image_path as string));
+  const orphans = data.filter((d) => !inUse.has(d.path));
+  if (!orphans.length) return;
+  const { error } = await supabase.from("creature_images").delete().in("id", orphans.map((o) => o.id));
+  if (error) return console.error(error);
+  await removeFiles(orphans.map((o) => o.path));
+}
+
+// URLs assinadas em lote: os pedidos feitos no mesmo instante (ex.: uma grade de
+// cartões) viram uma única chamada a createSignedUrls, com cache de 50 minutos.
+const SIGNED_TTL_SECONDS = 3600;
+const signedCache = new Map<string, { url: string; expires: number }>();
+let pendingSigned = new Map<string, { resolve: (url: string) => void; reject: (err: Error) => void }[]>();
+let signedTimer: ReturnType<typeof setTimeout> | null = null;
+
+async function flushSignedUrls(): Promise<void> {
+  const batch = pendingSigned;
+  pendingSigned = new Map();
+  signedTimer = null;
+  const paths = [...batch.keys()];
+  try {
+    const { data, error } = await supabase.storage.from(BUCKET).createSignedUrls(paths, SIGNED_TTL_SECONDS);
+    if (error) throw error;
+    const byPath = new Map((data ?? []).map((d) => [d.path, d]));
+    for (const path of paths) {
+      const url = byPath.get(path)?.signedUrl;
+      const waiters = batch.get(path) ?? [];
+      if (!url) {
+        waiters.forEach((w) => w.reject(new Error("Imagem indisponível.")));
+      } else {
+        signedCache.set(path, { url, expires: Date.now() + 50 * 60 * 1000 });
+        waiters.forEach((w) => w.resolve(url));
+      }
+    }
+  } catch {
+    for (const waiters of batch.values()) waiters.forEach((w) => w.reject(new Error("Imagem indisponível.")));
+  }
+}
+
+export function signedUrl(path: string): Promise<string> {
   const hit = signedCache.get(path);
-  if (hit && hit.expires > Date.now()) return hit.url;
-  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, 3600);
-  if (error || !data) throw new Error("Imagem indisponível.");
-  signedCache.set(path, { url: data.signedUrl, expires: Date.now() + 50 * 60 * 1000 });
-  return data.signedUrl;
+  if (hit && hit.expires > Date.now()) return Promise.resolve(hit.url);
+  return new Promise((resolve, reject) => {
+    const waiters = pendingSigned.get(path) ?? [];
+    waiters.push({ resolve, reject });
+    pendingSigned.set(path, waiters);
+    signedTimer ??= setTimeout(() => void flushSignedUrls(), 10);
+  });
 }
 
 // ---------------------------------------------------------------- Perfil

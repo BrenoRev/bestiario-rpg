@@ -70,7 +70,7 @@ export function SettingsPage() {
           <div className="mt-5 flex items-start gap-3 rounded-lg border border-line bg-parchment px-4 py-3 text-xs leading-relaxed text-ink-soft">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-moss" />
             <p>
-              Você entra com a conta Google. Seus universos, criaturas e imagens ficam protegidos por políticas de acesso no banco de dados: só a sua conta consegue vê-los ou alterá-los.
+              Você entra com e-mail e senha. Seus universos, criaturas e imagens ficam protegidos por políticas de acesso no banco de dados: só a sua conta consegue vê-los ou alterá-los.
             </p>
           </div>
           <Button className="mt-5" variant="danger" icon={<LogOut className="size-4" />} onClick={() => setConfirmOut(true)}>
@@ -102,7 +102,7 @@ export function SettingsPage() {
       <ConfirmDialog
         open={confirmOut}
         title="Sair da conta?"
-        message="Você precisará entrar novamente com o Google para acessar seus mundos."
+        message="Você precisará entrar novamente com seu e-mail e senha para acessar seus mundos."
         confirmLabel="Sair"
         onConfirm={() => void signOut()}
         onClose={() => setConfirmOut(false)}
