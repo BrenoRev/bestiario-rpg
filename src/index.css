@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------
+   Identidade visual do Bestiario: papel envelhecido, pergaminho,
+   destaque em vinho, texto marrom-escuro, bordas finas e discretas.
+   ------------------------------------------------------------------ */
+@theme {
+  --color-paper: #f3ecdd;
+  --color-parchment: #f7f1e4;
+  --color-cream: #fcf9f2;
+  --color-sand: #ebe2cf;
+  --color-line: #ddd2bf;
+  --color-line-strong: #c4b498;
+  --color-ink: #2b2119;
+  --color-ink-soft: #4a3d31;
+  --color-muted: #7a6a58;
+  --color-wine: #6b1d2a;
+  --color-wine-dark: #521520;
+  --color-wine-soft: #f2e2df;
+  --color-wine-line: #d9b5b0;
+  --color-wine-tint: #ecd5d1;
+  --color-moss: #4f6146;
+  --color-moss-soft: #e6ebdc;
+  --color-moss-line: #c9d3bc;
+  --color-amber: #8a5a14;
+  --color-amber-soft: #f5e7c9;
+  --color-amber-line: #e5cf9f;
+
+  --font-display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --radius-card: 0.625rem;
+  --shadow-soft: 0 1px 2px rgb(60 40 20 / 0.06), 0 2px 8px rgb(60 40 20 / 0.04);
+  --shadow-pop: 0 8px 28px rgb(60 40 20 / 0.14);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    color: var(--color-ink);
+    letter-spacing: 0.005em;
+  }
+  ::selection {
+    background: var(--color-wine-soft);
+    color: var(--color-wine-dark);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-wine);
+    outline-offset: 2px;
+  }
+  input, textarea, select, button {
+    font: inherit;
+  }
+}
+
+@layer components {
+  .card {
+    background: var(--color-cream);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-soft);
+  }
+  .field {
+    width: 100%;
+    background: var(--color-cream);
+    border: 1px solid var(--color-line);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    color: var(--color-ink);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field::placeholder {
+    color: #a8987f;
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--color-wine);
+    box-shadow: 0 0 0 3px rgb(107 29 42 / 0.12);
+  }
+  .field:disabled {
+    opacity: 0.6;
+  }
+  .label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-ink-soft);
+    margin-bottom: 0.35rem;
+  }
+  .hint {
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    margin-top: 0.3rem;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--color-wine);
+  }
+  /* Ficha de monstro */
+  .stat-rule {
+    height: 2px;
+    border: 0;
+    background: linear-gradient(90deg, var(--color-wine), rgb(107 29 42 / 0.15));
+    margin: 0.75rem 0;
+  }
+  .stat-heading {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-wine);
+    border-bottom: 1px solid var(--color-wine-line);
+    padding-bottom: 0.15rem;
+    margin: 1rem 0 0.5rem;
+  }
+  .prose-sheet p + p {
+    margin-top: 0.6rem;
+  }
+}
+
+/* Barras de rolagem discretas */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.animate-fade-in {
+  animation: fade-in 0.18s ease-out;
+}
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--color-sand) 0px, var(--color-parchment) 160px, var(--color-sand) 320px);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}

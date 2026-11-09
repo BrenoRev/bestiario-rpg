@@ -1,0 +1,48 @@
+# Configuração do Supabase CLI para desenvolvimento local (`supabase start`).
+project_id = "bestiario"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17
+
+[studio]
+enabled = true
+port = 54323
+
+[storage]
+enabled = true
+file_size_limit = "10MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/auth/callback", "http://127.0.0.1:5173/auth/callback"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+# Provedor de e-mail/senha desativado: o acesso é somente com Google.
+enabled = false
+
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+skip_nonce_check = true
+
+[edge_runtime]
+enabled = true
+policy = "per_worker"
+
+[functions.ai-creature]
+verify_jwt = true
+
+[functions.ai-image]
+verify_jwt = true

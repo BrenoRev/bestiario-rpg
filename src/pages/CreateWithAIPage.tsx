@@ -1,0 +1,642 @@
+// "Criar com IA": o mestre descreve a ideia, a IA propõe alternativas e o
+// mestre aceita, descarta, combina, modifica, pede variações ou ilustra.
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  BookPlus, Check, ChevronDown, ChevronUp, Combine, ExternalLink, GitBranch, Lightbulb, PenLine,
+  RefreshCw, Sparkles, Wand2, X,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { AIAssistModal, CREATIVITY_OPTIONS, DETAIL_OPTIONS, DiffReview } from "../components/creature/AIAssist";
+import { ImageStudio } from "../components/creature/ImageStudio";
+import { Narrative, StatBlock } from "../components/creature/StatBlock";
+import { Modal } from "../components/Modal";
+import { errorMessage, useToast } from "../components/Toast";
+import { Badge, Button, cx, EmptyState, PageHeader, PageLoader, Segmented, Select, TextArea, Toggle } from "../components/ui";
+import { useAuth } from "../context/AuthContext";
+import { useCurrentUniverse } from "../context/UniverseContext";
+import { keys, useProfile } from "../hooks/queries";
+import { generateCreatures, generateVariations } from "../lib/ai";
+import { attachImagesToCreature, createCreature } from "../lib/api";
+import { applyFields, diffCreatures } from "../lib/creature";
+import { CHALLENGE_RATINGS, CREATURE_TYPES } from "../lib/dnd";
+import type { AIAlternative, CreatureDraft, CreatureImage, Creativity, Detail } from "../lib/types";
+
+interface Proposal extends AIAlternative {
+  key: string;
+  images: CreatureImage[];
+  savedId?: string;
+}
+
+interface Settings {
+  description: string;
+  creatureType: string;
+  challengeRating: string;
+  creativity: Creativity;
+  detail: Detail;
+  count: number;
+  useContext: boolean;
+}
+
+const EXAMPLES = [
+  "Quero uma criatura que habita florestas antigas, possui aparência humanoide e caça viajantes durante a noite.",
+  "Um enxame de mariposas que se alimenta de memórias e deixa as vítimas confusas.",
+  "Um guardião de pedra construído para proteger um templo submerso, já meio tomado por corais.",
+  "Um predador das dunas que imita o som de água corrente para atrair caravanas.",
+];
+
+const newKey = () => crypto.randomUUID();
+const storageKey = (uid: string) => `bestiario:criar:${uid}`;
+
+function loadSession(uid: string | undefined): { settings?: Settings; proposals?: Proposal[]; active?: number; universeId?: string } {
+  if (!uid) return {};
+  try {
+    return JSON.parse(sessionStorage.getItem(storageKey(uid)) ?? "{}");
+  } catch {
+    return {};
+  }
+}
+
+export function CreateWithAIPage() {
+  const { user } = useAuth();
+  const { current, universes, setCurrentId, loading } = useCurrentUniverse();
+  const { data: profile } = useProfile();
+  const toast = useToast();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+
+  const saved = useMemo(() => loadSession(user?.id), [user?.id]);
+  const [settings, setSettings] = useState<Settings>(
+    saved.settings ?? {
+      description: "",
+      creatureType: "",
+      challengeRating: "",
+      creativity: "equilibrado",
+      detail: "padrao",
+      count: 2,
+      useContext: true,
+    },
+  );
+  const [proposals, setProposals] = useState<Proposal[]>(saved.proposals ?? []);
+  const [active, setActive] = useState(saved.active ?? 0);
+  const [formOpen, setFormOpen] = useState(!(saved.proposals?.length));
+  const [generating, setGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [modal, setModal] = useState<null | "modify" | "variation" | "combine">(null);
+  const [prefsApplied, setPrefsApplied] = useState(!!saved.settings);
+
+  const universeId = current?.id ?? "";
+
+  // Preferências do perfil como padrão (só na primeira visita da sessão).
+  useEffect(() => {
+    if (prefsApplied || !profile) return;
+    const p = profile.preferences ?? {};
+    setSettings((s) => ({
+      ...s,
+      creativity: p.creativity ?? s.creativity,
+      detail: p.detail ?? s.detail,
+      count: p.alternatives ?? s.count,
+      useContext: p.useUniverseContext ?? s.useContext,
+    }));
+    setPrefsApplied(true);
+  }, [profile, prefsApplied]);
+
+  // Guarda a sessão de criação para não perder propostas ao navegar.
+  useEffect(() => {
+    if (!user) return;
+    try {
+      sessionStorage.setItem(storageKey(user.id), JSON.stringify({ settings, proposals, active, universeId }));
+    } catch {
+      /* sem armazenamento: segue sem persistir */
+    }
+  }, [user, settings, proposals, active, universeId]);
+
+  const set = <K extends keyof Settings>(k: K, v: Settings[K]) => setSettings((s) => ({ ...s, [k]: v }));
+  const proposal = proposals[Math.min(active, proposals.length - 1)];
+
+  const updateProposal = useCallback((key: string, patch: Partial<Proposal>) => {
+    setProposals((list) => list.map((p) => (p.key === key ? { ...p, ...patch } : p)));
+  }, []);
+
+  const toProposals = (alts: AIAlternative[]): Proposal[] => alts.map((a) => ({ ...a, key: newKey(), images: [] }));
+
+  const generate = async (mode: "replace" | "more") => {
+    if (!settings.description.trim()) {
+      toast.error("Descreva a criatura que você imagina.");
+      return;
+    }
+    if (!universeId) return;
+    setGenerating(true);
+    try {
+      const alts = await generateCreatures({
+        universeId,
+        useUniverseContext: settings.useContext,
+        description: settings.description,
+        creatureType: settings.creatureType || null,
+        challengeRating: settings.challengeRating || null,
+        creativity: settings.creativity,
+        detail: settings.detail,
+        count: settings.count,
+        avoidNames: mode === "more" ? proposals.map((p) => p.creature.name) : undefined,
+      });
+      const fresh = toProposals(alts);
+      if (mode === "replace") {
+        // Mantém as propostas já salvas; troca o resto.
+        const keep = proposals.filter((p) => p.savedId);
+        setProposals([...keep, ...fresh]);
+        setActive(keep.length);
+      } else {
+        setProposals((list) => [...list, ...fresh]);
+        setActive(proposals.length);
+      }
+      setFormOpen(false);
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const discard = (key: string) => {
+    setProposals((list) => {
+      const idx = list.findIndex((p) => p.key === key);
+      const next = list.filter((p) => p.key !== key);
+      setActive((a) => Math.max(0, Math.min(a > idx ? a - 1 : a, next.length - 1)));
+      if (next.length === 0) setFormOpen(true);
+      return next;
+    });
+  };
+
+  const saveProposal = async () => {
+    if (!proposal || !universeId) return;
+    setSaving(true);
+    try {
+      const created = await createCreature(universeId, proposal.creature);
+      await attachImagesToCreature(proposal.images.map((i) => i.id), created.id);
+      updateProposal(proposal.key, { savedId: created.id });
+      qc.invalidateQueries({ queryKey: keys.creatures(universeId) });
+      qc.invalidateQueries({ queryKey: keys.universes });
+      toast.success(`“${created.name}” foi salva no bestiário de ${current?.name}.`);
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const onDraftVersions = useCallback(
+    (imgs: CreatureImage[]) => {
+      if (proposal) updateProposal(proposal.key, { images: imgs });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [proposal?.key, updateProposal],
+  );
+
+  if (loading) return <PageLoader />;
+  if (!current) {
+    return (
+      <EmptyState
+        icon={<Sparkles className="size-6" />}
+        title="Crie um universo primeiro"
+        description="A IA usa o contexto do universo para criar criaturas coerentes com o seu mundo."
+        action={
+          <Link to="/mundos/novo">
+            <Button variant="primary">Novo universo</Button>
+          </Link>
+        }
+      />
+    );
+  }
+
+  const form = (
+    <section className="card p-5 sm:p-6">
+      <TextArea
+        label="Descreva a criatura que você imagina"
+        value={settings.description}
+        onChange={(e) => set("description", e.target.value)}
+        placeholder={EXAMPLES[0]}
+        className="min-h-36 text-[0.95rem]"
+        maxLength={4000}
+        disabled={generating}
+      />
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        <span className="inline-flex items-center gap-1 text-xs text-muted">
+          <Lightbulb className="size-3.5" /> Exemplos:
+        </span>
+        {EXAMPLES.slice(1).map((ex) => (
+          <button
+            key={ex}
+            type="button"
+            onClick={() => set("description", ex)}
+            className="max-w-xs truncate rounded-full border border-line bg-parchment px-2.5 py-0.5 text-xs text-ink-soft hover:border-wine-line hover:text-wine cursor-pointer"
+            title={ex}
+          >
+            {ex}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Select label="Universo" value={universeId} onChange={(e) => setCurrentId(e.target.value)} disabled={generating}>
+          {universes.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.name}
+            </option>
+          ))}
+        </Select>
+        <Select label="Tipo de criatura" value={settings.creatureType} onChange={(e) => set("creatureType", e.target.value)} disabled={generating}>
+          <option value="">Deixar a IA decidir</option>
+          {CREATURE_TYPES.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
+          ))}
+        </Select>
+        <Select label="Nível de desafio desejado" value={settings.challengeRating} onChange={(e) => set("challengeRating", e.target.value)} disabled={generating}>
+          <option value="">Deixar a IA decidir</option>
+          {CHALLENGE_RATINGS.map((cr) => (
+            <option key={cr} value={cr}>
+              ND {cr}
+            </option>
+          ))}
+        </Select>
+        <Select label="Alternativas" value={String(settings.count)} onChange={(e) => set("count", Number(e.target.value))} disabled={generating}>
+          <option value="1">1 proposta</option>
+          <option value="2">2 propostas</option>
+          <option value="3">3 propostas</option>
+        </Select>
+      </div>
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <Segmented label="Nível de criatividade" value={settings.creativity} onChange={(v) => set("creativity", v)} options={CREATIVITY_OPTIONS} />
+        <Segmented label="Nível de detalhamento" value={settings.detail} onChange={(v) => set("detail", v)} options={DETAIL_OPTIONS} />
+      </div>
+      <div className="mt-5 flex flex-col gap-4 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <Toggle
+          checked={settings.useContext}
+          onChange={(v) => set("useContext", v)}
+          label={`Usar contexto de “${current.name}”`}
+          description="Ambientação, época, nível de fantasia e regras do universo."
+        />
+        <Button variant="primary" icon={<Sparkles className="size-4" />} onClick={() => generate("replace")} loading={generating} className="h-11 px-6">
+          {generating ? "Gerando sugestões…" : "Gerar sugestões"}
+        </Button>
+      </div>
+      {generating && (
+        <p className="mt-3 flex items-center gap-2 rounded-lg bg-parchment px-3 py-2 text-xs text-muted">
+          <Sparkles className="size-4 animate-pulse text-wine" />
+          A IA está concebendo {settings.count > 1 ? `${settings.count} propostas` : "a proposta"} e equilibrando as estatísticas. Isso pode levar até um minuto.
+        </p>
+      )}
+    </section>
+  );
+
+  return (
+    <>
+      <PageHeader
+        eyebrow={`Universo: ${current.name}`}
+        title="Criar com IA"
+        description="Descreva sua ideia. A IA propõe fichas de D&D 5e que você pode aceitar, descartar, combinar ou modificar. Nada entra no bestiário sem sua confirmação."
+      />
+
+      {proposals.length > 0 && !formOpen ? (
+        <div className="card mb-5 flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+          <p className="line-clamp-2 flex-1 text-sm text-ink-soft">
+            <span className="font-semibold text-ink">Sua ideia:</span> {settings.description}
+          </p>
+          <div className="flex shrink-0 gap-2">
+            <Button size="sm" icon={<ChevronDown className="size-4" />} onClick={() => setFormOpen(true)}>
+              Editar pedido
+            </Button>
+            <Button size="sm" variant="subtle" icon={<RefreshCw className="size-4" />} onClick={() => generate("more")} loading={generating}>
+              Gerar novas alternativas
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="mb-6">
+          {form}
+          {proposals.length > 0 && (
+            <div className="mt-2 flex justify-end">
+              <Button size="sm" variant="ghost" icon={<ChevronUp className="size-4" />} onClick={() => setFormOpen(false)}>
+                Recolher
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {generating && proposals.length > 0 && !formOpen && (
+        <p className="mb-4 flex items-center gap-2 rounded-lg border border-line bg-parchment px-3 py-2 text-xs text-muted">
+          <Sparkles className="size-4 animate-pulse text-wine" /> Gerando novas alternativas…
+        </p>
+      )}
+
+      {proposal && (
+        <div className="animate-fade-in">
+          {/* Abas das propostas */}
+          <div className="mb-4 flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Propostas da IA">
+            {proposals.map((p, i) => (
+              <div
+                key={p.key}
+                className={cx(
+                  "flex items-center rounded-lg border text-sm font-medium",
+                  i === active ? "border-wine bg-wine-soft text-wine" : "border-line bg-cream text-ink-soft hover:border-line-strong",
+                )}
+              >
+                <button role="tab" aria-selected={i === active} onClick={() => setActive(i)} className="flex items-center gap-1.5 py-1.5 pl-3 pr-1.5 cursor-pointer">
+                  {p.savedId && <Check className="size-3.5 text-moss" />}
+                  <span className="max-w-48 truncate">{p.creature.name || `Proposta ${i + 1}`}</span>
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Descartar ${p.creature.name}`}
+                  title="Descartar proposta"
+                  onClick={() => discard(p.key)}
+                  className="mr-1 rounded p-1 text-muted hover:bg-sand hover:text-wine cursor-pointer"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Ações */}
+          <div className="card mb-5 p-4">
+            {(proposal.concept || proposal.design_notes) && (
+              <div className="mb-4">
+                {proposal.concept && <p className="font-display text-xl font-semibold leading-snug text-ink">{proposal.concept}</p>}
+                {proposal.design_notes && <p className="mt-1.5 text-sm leading-relaxed text-muted">{proposal.design_notes}</p>}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2">
+              {proposal.savedId ? (
+                <Link to={`/criaturas/${proposal.savedId}`}>
+                  <Button variant="subtle" icon={<ExternalLink className="size-4" />}>
+                    Ver no bestiário
+                  </Button>
+                </Link>
+              ) : (
+                <Button variant="primary" icon={<BookPlus className="size-4" />} onClick={saveProposal} loading={saving}>
+                  Salvar no bestiário
+                </Button>
+              )}
+              <Button icon={<RefreshCw className="size-4" />} onClick={() => generate("more")} loading={generating}>
+                Novas alternativas
+              </Button>
+              <Button icon={<Wand2 className="size-4" />} onClick={() => setModal("modify")}>
+                Modificar característica
+              </Button>
+              <Button icon={<GitBranch className="size-4" />} onClick={() => setModal("variation")}>
+                Pedir variação
+              </Button>
+              {proposals.length > 1 && (
+                <Button icon={<Combine className="size-4" />} onClick={() => setModal("combine")}>
+                  Combinar
+                </Button>
+              )}
+              <Button
+                icon={<PenLine className="size-4" />}
+                onClick={() => navigate("/criaturas/nova", { state: { draft: proposal.creature, universeId, images: proposal.images } })}
+              >
+                Editar manualmente
+              </Button>
+            </div>
+            {proposal.savedId && (
+              <p className="mt-3 text-xs text-muted">
+                Esta proposta já está no bestiário. Alterações feitas aqui não mudam a ficha salva; edite-a pela página da criatura.
+              </p>
+            )}
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
+            <div className="space-y-6">
+              <StatBlock creature={proposal.creature} />
+              <Narrative creature={proposal.creature} showNotes={false} />
+            </div>
+            <div className="lg:sticky lg:top-24 lg:self-start">
+              <ImageStudio
+                key={proposal.key}
+                universeId={universeId}
+                creatureId={null}
+                creature={proposal.creature}
+                currentPath={proposal.creature.image_path}
+                onSelect={(path) => updateProposal(proposal.key, { creature: { ...proposal.creature, image_path: path } })}
+                onDraftVersions={onDraftVersions}
+                initialDraftVersions={proposal.images}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {proposal && (
+        <>
+          <AIAssistModal
+            open={modal === "modify"}
+            onClose={() => setModal(null)}
+            title="Modificar característica"
+            creature={proposal.creature}
+            universeId={universeId}
+            onApply={(next) => updateProposal(proposal.key, { creature: next })}
+          />
+          <VariationRequest
+            open={modal === "variation"}
+            onClose={() => setModal(null)}
+            base={proposal.creature}
+            universeId={universeId}
+            settings={settings}
+            onResult={(alts) => {
+              const fresh = toProposals(alts);
+              setProposals((list) => [...list, ...fresh]);
+              setActive(proposals.length);
+            }}
+          />
+          <CombineModal
+            open={modal === "combine"}
+            onClose={() => setModal(null)}
+            target={proposal}
+            others={proposals.filter((p) => p.key !== proposal.key)}
+            onApply={(next) => updateProposal(proposal.key, { creature: next })}
+          />
+        </>
+      )}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------- Variação
+function VariationRequest({
+  open,
+  onClose,
+  base,
+  universeId,
+  settings,
+  onResult,
+}: {
+  open: boolean;
+  onClose: () => void;
+  base: CreatureDraft;
+  universeId: string;
+  settings: Settings;
+  onResult: (alts: AIAlternative[]) => void;
+}) {
+  const toast = useToast();
+  const [instruction, setInstruction] = useState("");
+  const [count, setCount] = useState("1");
+  const [loading, setLoading] = useState(false);
+
+  const run = async () => {
+    setLoading(true);
+    try {
+      const alts = await generateVariations({
+        universeId,
+        useUniverseContext: settings.useContext,
+        creativity: settings.creativity,
+        detail: settings.detail,
+        creature: base,
+        instruction,
+        count: Number(count),
+      });
+      onResult(alts);
+      setInstruction("");
+      onClose();
+      toast.success(alts.length > 1 ? "Variações adicionadas às propostas." : "Variação adicionada às propostas.");
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      busy={loading}
+      title={`Variação de ${base.name || "criatura"}`}
+      description="A variação entra como uma nova proposta; a atual continua disponível."
+      footer={
+        <>
+          <Button onClick={onClose} disabled={loading}>
+            Cancelar
+          </Button>
+          <Button variant="primary" icon={<GitBranch className="size-4" />} onClick={run} loading={loading}>
+            {loading ? "Criando…" : "Criar variação"}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <TextArea
+          label="Que tipo de variação? (opcional)"
+          value={instruction}
+          onChange={(e) => setInstruction(e.target.value)}
+          placeholder="Ex.: uma versão jovem e mais fraca; uma rainha da colmeia; uma forma corrompida por magia."
+          disabled={loading}
+        />
+        <Select label="Quantidade" value={count} onChange={(e) => setCount(e.target.value)} disabled={loading}>
+          <option value="1">1 variação</option>
+          <option value="2">2 variações</option>
+          <option value="3">3 variações</option>
+        </Select>
+        {loading && (
+          <p className="flex items-center gap-2 rounded-lg bg-parchment px-3 py-2 text-xs text-muted">
+            <Sparkles className="size-4 animate-pulse text-wine" /> Criando a variação…
+          </p>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+// ---------------------------------------------------------------- Combinar
+function CombineModal({
+  open,
+  onClose,
+  target,
+  others,
+  onApply,
+}: {
+  open: boolean;
+  onClose: () => void;
+  target: Proposal;
+  others: Proposal[];
+  onApply: (next: CreatureDraft) => void;
+}) {
+  const [sourceKey, setSourceKey] = useState("");
+  const [selected, setSelected] = useState<Set<keyof CreatureDraft>>(new Set());
+  const source = others.find((o) => o.key === sourceKey) ?? others[0];
+
+  useEffect(() => {
+    if (open) {
+      setSourceKey(others[0]?.key ?? "");
+      setSelected(new Set());
+    }
+  }, [open, others]);
+
+  if (!source) return null;
+  const changed = diffCreatures(target.creature, source.creature);
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="lg"
+      title={`Combinar em “${target.creature.name}”`}
+      description="Escolha uma outra proposta e marque os campos que quer trazer dela. O restante permanece como está."
+      footer={
+        <>
+          <Button onClick={onClose}>Cancelar</Button>
+          <Button
+            variant="primary"
+            icon={<Combine className="size-4" />}
+            disabled={selected.size === 0}
+            onClick={() => {
+              onApply(applyFields(target.creature, source.creature, [...selected]));
+              onClose();
+            }}
+          >
+            Trazer {selected.size || ""} {selected.size === 1 ? "campo" : "campos"}
+          </Button>
+        </>
+      }
+    >
+      <div className="mb-4 flex flex-wrap items-end gap-3">
+        <Select label="Trazer campos de" value={source.key} onChange={(e) => {
+          setSourceKey(e.target.value);
+          setSelected(new Set());
+        }} wrapperClassName="min-w-60 flex-1">
+          {others.map((o) => (
+            <option key={o.key} value={o.key}>
+              {o.creature.name}
+            </option>
+          ))}
+        </Select>
+        <div className="flex gap-2">
+          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set(changed))}>
+            Marcar todos
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+            Limpar
+          </Button>
+        </div>
+      </div>
+      <Badge tone="neutral" className="mb-3">
+        “Atual” é {target.creature.name}; “Proposta” é {source.creature.name}
+      </Badge>
+      <DiffReview
+        current={target.creature}
+        proposal={source.creature}
+        selected={selected}
+        onToggle={(key) =>
+          setSelected((s) => {
+            const next = new Set(s);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+          })
+        }
+      />
+    </Modal>
+  );
+}

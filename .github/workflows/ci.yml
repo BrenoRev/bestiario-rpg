@@ -1,0 +1,64 @@
+# Validação de todo Pull Request (e da main depois do merge).
+# Os três jobs precisam passar antes de um PR entrar na main.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend (tipos, testes e build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Checagem de tipos
+        run: npm run typecheck
+      - name: Testes unitários
+        run: npm test
+      - name: Build de produção
+        run: npm run build
+
+  functions:
+    name: Edge Functions (deno check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Checagem de tipos das funções
+        run: deno check supabase/functions/*/index.ts
+
+  database:
+    name: Banco (migrações do zero)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Valores fictícios: o config.toml exige as variáveis do Google, mas o CI não faz login.
+      SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID: ci
+      SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET: ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Sobe o Supabase local e aplica as migrações
+        run: supabase start -x vector,logflare,imgproxy,supavisor,studio
+      - name: Reaplica as migrações do zero
+        run: supabase db reset
