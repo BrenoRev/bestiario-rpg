@@ -55,7 +55,7 @@ export function UniversePage() {
     <>
       <section className="card mb-8 overflow-hidden">
         <div className="grid md:grid-cols-[minmax(0,22rem)_1fr]">
-          <StoredImage path={universe.cover_path} alt={`Capa de ${universe.name}`} className="aspect-[16/10] size-full border-b border-line md:aspect-auto md:min-h-64 md:border-b-0 md:border-r" fallbackLabel="Sem capa" />
+          <StoredImage path={universe.cover_path} alt={`Capa de ${universe.name}`} className="aspect-[16/10] size-full border-b border-line [view-transition-name:universe-cover] md:aspect-auto md:min-h-64 md:border-b-0 md:border-r" fallbackLabel="Sem capa" />
           <div className="flex flex-col p-6 sm:p-7">
             <div className="flex flex-wrap items-center gap-2">
               {universe.genre && <Badge tone="wine">{universe.genre}</Badge>}

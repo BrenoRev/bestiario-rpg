@@ -3,7 +3,7 @@ import { Suspense, useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router";
 import { useCurrentUniverse } from "../../context/UniverseContext";
 import { Logo, StoredImage } from "../brand";
-import { cx, IconButton, PageLoader } from "../ui";
+import { cx, IconButton, PageLoader, usePresence } from "../ui";
 import { Topbar, UniverseSwitcher } from "./Topbar";
 
 const NAV = [
@@ -32,6 +32,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             key={to}
             to={to}
             end={end}
+            viewTransition
             onClick={onNavigate}
             className={({ isActive }) =>
               cx(
@@ -54,6 +55,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         <div className="mt-auto p-3">
           <NavLink
             to={`/mundos/${current.id}`}
+            viewTransition
             onClick={onNavigate}
             className="flex items-center gap-3 rounded-lg border border-line bg-parchment p-2.5 transition-colors hover:border-line-strong"
           >
@@ -71,6 +73,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AppLayout() {
   const [drawer, setDrawer] = useState(false);
+  const drawerPresence = usePresence(drawer);
   const location = useLocation();
 
   useEffect(() => {
@@ -86,10 +89,19 @@ export function AppLayout() {
       </aside>
 
       {/* Gaveta (mobile) */}
-      {drawer && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-ink/40" onClick={() => setDrawer(false)} aria-hidden />
-          <aside className="animate-fade-in absolute inset-y-0 left-0 w-72 border-r border-line bg-parchment shadow-[var(--shadow-pop)]">
+      {drawerPresence.mounted && (
+        <div className={cx("fixed inset-0 z-40 lg:hidden", drawerPresence.closing && "pointer-events-none")}>
+          <div
+            className={cx("absolute inset-0 bg-ink/40", drawerPresence.closing ? "animate-fade-out" : "animate-fade-in")}
+            onClick={() => setDrawer(false)}
+            aria-hidden
+          />
+          <aside
+            className={cx(
+              "absolute inset-y-0 left-0 w-72 border-r border-line bg-parchment shadow-[var(--shadow-pop)]",
+              drawerPresence.closing ? "animate-drawer-out" : "animate-drawer-in",
+            )}
+          >
             <IconButton label="Fechar menu" onClick={() => setDrawer(false)} className="absolute right-3 top-4">
               <X className="size-5" />
             </IconButton>
@@ -106,7 +118,8 @@ export function AppLayout() {
             </IconButton>
           }
         />
-        <main className="mx-auto w-full max-w-[1280px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        {/* `page`: nome da transição entre telas (index.css). */}
+        <main className="mx-auto w-full max-w-[1280px] px-4 py-6 [view-transition-name:page] sm:px-6 lg:px-8 lg:py-8">
           <Suspense fallback={<PageLoader />}>
             <Outlet />
           </Suspense>

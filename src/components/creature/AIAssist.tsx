@@ -8,7 +8,8 @@ import type { AIAlternative, CreatureDraft, Creativity, Detail } from "../../lib
 import { useProfile } from "../../hooks/queries";
 import { Modal } from "../Modal";
 import { errorMessage, useToast } from "../Toast";
-import { Button, cx, Segmented, Select, TextArea, Toggle } from "../ui";
+import { D20 } from "../brand";
+import { ArcaneWait, Button, cx, Segmented, Select, TextArea, Toggle } from "../ui";
 import { Narrative, StatBlock } from "./StatBlock";
 
 // ---------------------------------------------------------------- Revisão de diferenças
@@ -26,6 +27,12 @@ export function DiffReview({
   onToggle: (key: keyof CreatureDraft) => void;
 }) {
   const changed = useMemo(() => diffCreatures(current, proposal), [current, proposal]);
+  // Campos que o mestre acabou de marcar piscam em verde (os marcados de início, não).
+  const [marked, setMarked] = useState<Set<keyof CreatureDraft>>(new Set());
+  const toggle = (key: keyof CreatureDraft) => {
+    if (!selected.has(key)) setMarked((m) => new Set(m).add(key));
+    onToggle(key);
+  };
   return (
     <div className="space-y-4">
       {summary && (
@@ -47,9 +54,16 @@ export function DiffReview({
             {changed.map((key) => {
               const on = selected.has(key);
               return (
-                <li key={key} className={cx("rounded-lg border transition-colors", on ? "border-wine-line bg-cream" : "border-line bg-parchment/50 opacity-70")}>
+                <li
+                  key={key}
+                  className={cx(
+                    "rounded-lg border transition-[opacity,border-color,background-color] duration-300",
+                    on ? "border-wine-line bg-cream" : "border-line bg-parchment/50 opacity-70",
+                    on && marked.has(key) && "animate-flash",
+                  )}
+                >
                   <label className="flex cursor-pointer items-center gap-2.5 border-b border-line/70 px-4 py-2.5">
-                    <input type="checkbox" className="accent-wine size-4" checked={on} onChange={() => onToggle(key)} />
+                    <input type="checkbox" className="accent-wine size-4" checked={on} onChange={() => toggle(key)} />
                     <span className="font-display text-lg font-semibold text-ink">{FIELD_LABELS[key] ?? key}</span>
                   </label>
                   <div className="grid gap-3 px-4 py-3 md:grid-cols-2">
@@ -193,7 +207,7 @@ export function AIAssistModal({ open, onClose, creature, universeId, onApply, in
             <Button icon={<ArrowLeft className="size-4" />} onClick={() => setResult(null)} disabled={applying}>
               Ajustar pedido
             </Button>
-            <Button icon={<RefreshCw className="size-4" />} onClick={() => run()} loading={loading} disabled={applying}>
+            <Button icon={<RefreshCw className="size-4" />} busyIcon={<D20 className="size-4 animate-roll" />} onClick={() => run()} loading={loading} disabled={applying}>
               Outra sugestão
             </Button>
             <Button variant="primary" icon={<Check className="size-4" />} onClick={apply} loading={applying} disabled={selected.size === 0 || loading}>
@@ -205,7 +219,7 @@ export function AIAssistModal({ open, onClose, creature, universeId, onApply, in
             <Button onClick={onClose} disabled={loading}>
               Cancelar
             </Button>
-            <Button variant="primary" icon={<Wand2 className="size-4" />} onClick={() => run()} loading={loading}>
+            <Button variant="primary" icon={<Wand2 className="size-4" />} busyIcon={<D20 className="size-4 animate-roll" />} onClick={() => run()} loading={loading}>
               {loading ? "Pensando…" : "Pedir sugestão"}
             </Button>
           </>
@@ -254,9 +268,12 @@ export function AIAssistModal({ open, onClose, creature, universeId, onApply, in
           </div>
           <Toggle checked={useContext} onChange={setUseContext} label="Usar contexto do universo" description="Considera ambientação, época e regras do mundo." />
           {loading && (
-            <p className="flex items-center gap-2 rounded-lg bg-parchment px-3 py-2 text-xs text-muted">
-              <Sparkles className="size-4 animate-pulse text-wine" /> A IA está revisando a ficha. Isso costuma levar de 20 a 60 segundos.
-            </p>
+            <ArcaneWait
+              size="sm"
+              className="animate-fade-in rounded-lg bg-parchment px-3 py-2.5"
+              phrases={["A IA está revisando a ficha…", "Relendo cada linha…", "Pesando o Nível de Desafio…", "Anotando as sugestões…"]}
+              note="Isso costuma levar de 20 a 60 segundos."
+            />
           )}
         </div>
       )}
@@ -350,7 +367,7 @@ export function VariationsModal({
       footer={
         current ? (
           <>
-            <Button icon={<RefreshCw className="size-4" />} onClick={run} loading={loading}>
+            <Button icon={<RefreshCw className="size-4" />} busyIcon={<D20 className="size-4 animate-roll" />} onClick={run} loading={loading}>
               Gerar outras
             </Button>
             <Button icon={<PenLine className="size-4" />} onClick={() => onEdit(current.creature)}>
@@ -377,7 +394,7 @@ export function VariationsModal({
             <Button onClick={onClose} disabled={loading}>
               Cancelar
             </Button>
-            <Button variant="primary" icon={<Sparkles className="size-4" />} onClick={run} loading={loading}>
+            <Button variant="primary" icon={<Sparkles className="size-4" />} busyIcon={<D20 className="size-4 animate-roll" />} onClick={run} loading={loading}>
               {loading ? "Criando variações…" : "Gerar variações"}
             </Button>
           </>
@@ -404,7 +421,7 @@ export function VariationsModal({
               ))}
             </div>
           )}
-          <AlternativePreview alt={current} />
+          <AlternativePreview key={tab} alt={current} />
         </div>
       ) : (
         <div className="space-y-4">
@@ -424,9 +441,12 @@ export function VariationsModal({
             </Select>
           </div>
           {loading && (
-            <p className="flex items-center gap-2 rounded-lg bg-parchment px-3 py-2 text-xs text-muted">
-              <Sparkles className="size-4 animate-pulse text-wine" /> Criando variações. Pode levar até um minuto.
-            </p>
+            <ArcaneWait
+              size="sm"
+              className="animate-fade-in rounded-lg bg-parchment px-3 py-2.5"
+              phrases={["Criando variações…", "Cruzando linhagens…", "Ajustando garras e presas…", "Escrevendo as crônicas…"]}
+              note="Pode levar até um minuto."
+            />
           )}
         </div>
       )}

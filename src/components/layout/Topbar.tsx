@@ -48,10 +48,10 @@ function GlobalSearch() {
   });
   const worlds = q.length >= 2 ? universes.filter((u) => u.name.toLowerCase().includes(q.toLowerCase())).slice(0, 4) : [];
   const items = [
-    ...worlds.map((u) => ({ key: `u-${u.id}`, go: () => navigate(`/mundos/${u.id}`), label: u.name, meta: "Universo", universeId: u.id })),
+    ...worlds.map((u) => ({ key: `u-${u.id}`, go: () => navigate(`/mundos/${u.id}`, { viewTransition: true }), label: u.name, meta: "Universo", universeId: u.id })),
     ...creatures.map((c) => ({
       key: `c-${c.id}`,
-      go: () => navigate(`/criaturas/${c.id}`),
+      go: () => navigate(`/criaturas/${c.id}`, { viewTransition: true }),
       label: c.name,
       meta: `${typeLabel(c.creature_type)} · ND ${c.challenge_rating} · ${c.universe_name}`,
       universeId: c.universe_id,

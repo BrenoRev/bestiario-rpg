@@ -56,7 +56,7 @@ export function WorldsPage() {
           }
         />
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="stagger grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {data?.map((u) => <UniverseCard key={u.id} universe={u} onOpen={() => setCurrentId(u.id)} />)}
           <NewUniverseCard />
         </div>

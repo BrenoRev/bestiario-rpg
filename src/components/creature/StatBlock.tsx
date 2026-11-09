@@ -3,7 +3,7 @@
 import { ABILITIES, abilityMod, abilityShort, formatSpeed, habitatLabel, signed, xpForCR } from "../../lib/dnd";
 import { creatureSubtitle } from "../../lib/creature";
 import type { CreatureDraft, Entry } from "../../lib/types";
-import { Badge } from "../ui";
+import { Badge, cx } from "../ui";
 
 function Line({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -27,16 +27,23 @@ function Entries({ items }: { items: Entry[] }) {
 
 const nonEmpty = (list: string[]) => list.filter((x) => x.trim()).join(", ");
 
-export function StatBlock({ creature, compact }: { creature: CreatureDraft; compact?: boolean }) {
+/**
+ * Ficha mecânica. Ao montar, os blocos entram em sequência e as linhas são riscadas
+ * (`.sheet-reveal`); dê uma `key` nova ao trocar de criatura para repetir o efeito.
+ * `transitionName` liga o nome à transição de página (só onde houver uma ficha na tela).
+ */
+export function StatBlock({ creature, compact, transitionName }: { creature: CreatureDraft; compact?: boolean; transitionName?: string }) {
   const c = creature;
   const saves = c.saving_throws.map((s) => `${abilityShort(s.ability)} ${signed(s.bonus)}`).join(", ");
   const skills = c.skills.map((s) => `${s.name} ${signed(s.bonus)}`).join(", ");
   const hasLegendary = c.legendary_actions.length > 0;
 
   return (
-    <article className={compact ? "" : "card px-5 py-5 sm:px-7 sm:py-6"} aria-label="Ficha de estatísticas">
+    <article className={cx("sheet-reveal", !compact && "card ornate px-5 py-5 sm:px-7 sm:py-6")} aria-label="Ficha de estatísticas">
       <header>
-        <h2 className="text-[2rem] leading-none font-bold text-wine">{c.name || "Criatura sem nome"}</h2>
+        <h2 className="w-fit text-[2rem] leading-none font-bold text-wine" style={{ viewTransitionName: transitionName }}>
+          {c.name || "Criatura sem nome"}
+        </h2>
         <p className="mt-1.5 text-sm italic text-ink-soft first-letter:uppercase">{creatureSubtitle(c)}</p>
       </header>
 
@@ -156,11 +163,11 @@ export function Narrative({ creature, showNotes = true }: { creature: CreatureDr
       {filled.length === 0 ? (
         <p className="mt-3 text-sm text-muted">Nenhuma descrição narrativa ainda.</p>
       ) : (
-        <div className="mt-3 space-y-4">
-          {filled.map((n) => (
+        <div className="stagger mt-3 space-y-4">
+          {filled.map((n, i) => (
             <div key={n.key}>
               <h3 className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-muted">{n.label}</h3>
-              <p className="mt-1 text-[0.92rem] leading-relaxed whitespace-pre-line text-ink">{String(creature[n.key])}</p>
+              <p className={cx("mt-1 text-[0.92rem] leading-relaxed whitespace-pre-line text-ink", i === 0 && "drop-cap")}>{String(creature[n.key])}</p>
             </div>
           ))}
         </div>
@@ -172,5 +179,33 @@ export function Narrative({ creature, showNotes = true }: { creature: CreatureDr
         </div>
       )}
     </section>
+  );
+}
+
+/** Ficha em branco enquanto a IA escreve (mesmo formato do `StatBlock`). */
+export function StatBlockSkeleton() {
+  return (
+    <div className="card ornate px-5 py-5 sm:px-7 sm:py-6" aria-hidden>
+      <div className="skeleton h-8 w-1/2 rounded" />
+      <div className="skeleton mt-2 h-3 w-1/3 rounded" />
+      <hr className="stat-rule opacity-40" />
+      <div className="space-y-2">
+        <div className="skeleton h-3 w-2/5 rounded" />
+        <div className="skeleton h-3 w-1/3 rounded" />
+        <div className="skeleton h-3 w-1/2 rounded" />
+      </div>
+      <hr className="stat-rule opacity-40" />
+      <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+        {Array.from({ length: 6 }, (_, i) => (
+          <div key={i} className="skeleton h-9 rounded" />
+        ))}
+      </div>
+      <hr className="stat-rule opacity-40" />
+      <div className="space-y-2">
+        <div className="skeleton h-3 w-full rounded" />
+        <div className="skeleton h-3 w-11/12 rounded" />
+        <div className="skeleton h-3 w-4/5 rounded" />
+      </div>
+    </div>
   );
 }
