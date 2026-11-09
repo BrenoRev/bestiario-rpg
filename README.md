@@ -4,7 +4,7 @@ Plataforma web para mestres de RPG criarem e organizarem bestiários por univers
 
 ## Funcionalidades
 
-- **Cadastro e login com e-mail e senha** (Supabase Auth). Senha com pelo menos 8 caracteres e mensagens de erro em português.
+- **Cadastro e login com e-mail e senha** (Supabase Auth). Senha com pelo menos 6 caracteres, com letras e números, e mensagens de erro em português.
 - **Meus Mundos**: universos com capa, gênero, ambientação, época, nível de fantasia, regras particulares e estilo visual. Cada um tem o próprio bestiário.
 - **Criaturas**: grade com busca por nome, filtros por categoria, habitat e nível de ameaça, e ordenação (A–Z, Z–A, ND, recentes).
 - **Ficha D&D 5e completa**:
@@ -110,10 +110,11 @@ npx supabase db push            # aplica supabase/migrations
 ### 3. Autenticação
 
 No painel do Supabase, em **Authentication → Sign In / Providers → Email**:
-1. Deixe o provedor **Email** ativo, com cadastro permitido.
-2. Desative **Confirm email** para o fluxo básico (a conta entra logada logo após o cadastro). Se preferir manter a confirmação, o app já avisa o usuário para confirmar pelo link antes de entrar.
-3. Em **Authentication → Policies**, defina a senha mínima em 8 caracteres (o app valida o mesmo).
-4. Em **Authentication → URL Configuration**, defina o *Site URL* com a URL do app.
+1. Provedor **Email** ativo, com cadastro permitido.
+2. **Confirm email** desligado para o fluxo básico (a conta entra logada logo após o cadastro). Se preferir manter a confirmação, o app já avisa o usuário para confirmar pelo link antes de entrar.
+3. Senha mínima de **6 caracteres** com **letras e números** (o app valida o mesmo antes de enviar).
+4. **Secure password change**, **Secure email change** e **Require current password when updating** ativos.
+5. Em **Authentication → URL Configuration**, defina o *Site URL* com a URL do app.
 
 ### 4. Edge Functions (IA)
 

@@ -2,12 +2,13 @@
 paths:
   - "src/**/*.test.ts"
   - "src/lib/**/*.ts"
+  - "src/context/**/*.ts*"
   - "supabase/tests/**"
 ---
 
 # Testes
 
-- Vitest, arquivo `<modulo>.test.ts` ao lado do módulo em `src/lib/` (veja `dnd.test.ts`, `creature.test.ts`).
+- Vitest, arquivo `<modulo>.test.ts` ao lado do módulo testado, em `src/` (veja `lib/dnd.test.ts`, `lib/creature.test.ts`, `context/auth.test.ts`).
 - Teste a **lógica pura**: regras de D&D, normalização de dados, diferença e aplicação de propostas, formatação.
 - Nomes de `describe` e `it` em pt-BR, descrevendo o comportamento ("deriva o bônus de proficiência do ND").
 - Toda função nova ou alterada em `src/lib/` (exceto o acesso a dados de `api.ts` e `ai.ts`) ganha ou atualiza teste.

@@ -26,14 +26,18 @@ site_url = "http://localhost:5173"
 additional_redirect_urls = ["http://127.0.0.1:5173"]
 jwt_expiry = 3600
 enable_signup = true
-# Senhas com pelo menos 8 caracteres (o app valida o mesmo antes de enviar).
-minimum_password_length = 8
+# Mesma política do projeto de produção: mínimo de 6 caracteres, com letras e números
+# (o app valida o mesmo antes de enviar, em passwordProblem).
+minimum_password_length = 6
+password_requirements = "letters_digits"
 
 [auth.email]
 # Cadastro e login por e-mail e senha. Sem confirmação por e-mail: a conta já entra logada.
 enabled = true
 enable_confirmations = false
+# Troca de e-mail e de senha protegidas, como em produção.
 double_confirm_changes = true
+secure_password_change = true
 
 [edge_runtime]
 enabled = true

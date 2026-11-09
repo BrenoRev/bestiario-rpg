@@ -4,7 +4,7 @@ import { Navigate, useLocation } from "react-router";
 import { Logo } from "../components/brand";
 import { errorMessage } from "../components/Toast";
 import { Button, Segmented, TextInput } from "../components/ui";
-import { MIN_PASSWORD_LENGTH, useAuth } from "../context/AuthContext";
+import { PASSWORD_RULE, passwordProblem, useAuth } from "../context/AuthContext";
 
 const FEATURES = [
   { icon: Globe2, title: "Um bestiário por mundo", text: "Organize criaturas por universo e campanha." },
@@ -34,7 +34,11 @@ export function LoginPage() {
     setNotice(null);
     if (mode === "criar" && !name.trim()) return setError("Diga como quer ser chamado.");
     if (!email.trim()) return setError("Informe seu e-mail.");
-    if (password.length < MIN_PASSWORD_LENGTH) return setError(`A senha precisa ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`);
+    if (!password) return setError("Informe sua senha.");
+    if (mode === "criar") {
+      const problem = passwordProblem(password);
+      if (problem) return setError(problem);
+    }
     setPending(true);
     try {
       if (mode === "entrar") {
@@ -122,7 +126,7 @@ export function LoginPage() {
               autoComplete={mode === "entrar" ? "current-password" : "new-password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              hint={mode === "criar" ? `Pelo menos ${MIN_PASSWORD_LENGTH} caracteres.` : undefined}
+              hint={mode === "criar" ? PASSWORD_RULE : undefined}
             />
 
             {error && (

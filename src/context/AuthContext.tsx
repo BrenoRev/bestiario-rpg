@@ -4,7 +4,16 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 
-export const MIN_PASSWORD_LENGTH = 8;
+/** Mesma política do Supabase Auth: mínimo de 6 caracteres, com letras e números. */
+export const MIN_PASSWORD_LENGTH = 6;
+export const PASSWORD_RULE = `Pelo menos ${MIN_PASSWORD_LENGTH} caracteres, com letras e números.`;
+
+/** Valida a senha de cadastro no app, antes de enviar (devolve a mensagem do problema ou null). */
+export function passwordProblem(password: string): string | null {
+  if (password.length < MIN_PASSWORD_LENGTH) return `A senha precisa ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`;
+  if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) return "A senha precisa ter letras e números.";
+  return null;
+}
 
 interface SignUpResult {
   /** false quando o projeto exige confirmação por e-mail antes do primeiro login. */
@@ -31,7 +40,7 @@ function authMessage(error: AuthError): string {
     case "email_exists":
       return "Já existe uma conta com este e-mail. Entre com sua senha.";
     case "weak_password":
-      return `Escolha uma senha mais forte, com pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`;
+      return `Escolha uma senha mais forte: ${PASSWORD_RULE.toLowerCase()}`;
     case "email_address_invalid":
       return "Este e-mail não é válido.";
     case "email_not_confirmed":

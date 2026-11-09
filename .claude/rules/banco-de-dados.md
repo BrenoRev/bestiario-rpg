@@ -81,6 +81,6 @@ create policy "exemplos_delete_own" on public.exemplos
 
 ## Autenticação
 
-- Cadastro e login por e-mail e senha no Supabase Auth. `config.toml`: `[auth.email] enabled = true`, `enable_confirmations = false`, `minimum_password_length = 8`. Em produção, o painel do Supabase deve ter a mesma configuração.
+- Cadastro e login por e-mail e senha no Supabase Auth. `config.toml`: `[auth.email] enabled = true`, `enable_confirmations = false`, `secure_password_change = true`, `double_confirm_changes = true`; `[auth] minimum_password_length = 6`, `password_requirements = "letters_digits"`. Produção usa a mesma política; se mudar lá, mude aqui e em `passwordProblem` (`AuthContext.tsx`).
 - O nome do cadastro vai em `options.data.full_name` no `signUp`; o perfil nasce pelo trigger `on_auth_user_created` → `handle_new_user`. Não crie perfil pelo app.
 - Sem provedores OAuth, salvo pedido explícito.
