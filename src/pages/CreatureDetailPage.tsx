@@ -82,11 +82,11 @@ export function CreatureDetailPage() {
   return (
     <>
       <nav className="mb-4 flex min-w-0 items-center gap-1 text-sm text-muted" aria-label="Trilha">
-        <Link to={`/mundos/${creature.universe_id}`} className="max-w-[40%] truncate hover:text-ink" title={universe?.name}>
+        <Link to={`/mundos/${creature.universe_id}`} viewTransition className="max-w-[40%] truncate hover:text-ink" title={universe?.name}>
           {universe?.name ?? "Universo"}
         </Link>
         <ChevronRight className="size-3.5 shrink-0" />
-        <Link to="/criaturas" className="shrink-0 hover:text-ink">
+        <Link to="/criaturas" viewTransition className="shrink-0 hover:text-ink">
           Criaturas
         </Link>
         <ChevronRight className="size-3.5 shrink-0" />
@@ -118,7 +118,7 @@ export function CreatureDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-6">
-          <StatBlock creature={draft} />
+          <StatBlock creature={draft} transitionName="creature-name" />
           <Narrative creature={draft} />
         </div>
         <div className="side-panel order-first lg:order-none">
@@ -127,6 +127,7 @@ export function CreatureDetailPage() {
             creatureId={creature.id}
             creature={draft}
             currentPath={creature.image_path}
+            transitionName="creature-image"
             onSelect={async (path) => {
               await save({ image_path: path });
             }}

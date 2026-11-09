@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { useCreatures } from "../../hooks/queries";
 import { CREATURE_LIST_LIMIT } from "../../lib/api";
 import { CREATURE_TYPES, HABITATS, THREAT_LEVELS } from "../../lib/dnd";
-import { Button, EmptyState, ErrorState, Select } from "../ui";
+import { Button, cx, EmptyState, ErrorState, Select } from "../ui";
 import { CreatureCard, CreatureCardSkeleton } from "./CreatureCard";
 
 type Sort = "az" | "za" | "cr-asc" | "cr-desc" | "recent";
@@ -146,7 +146,7 @@ export function BestiaryBrowser({ universeId }: { universeId: string }) {
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+      <div className={cx("grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4", !isLoading && "stagger")}>
         {isLoading
           ? Array.from({ length: 6 }, (_, i) => <CreatureCardSkeleton key={i} />)
           : filtered.map((c) => <CreatureCard key={c.id} creature={c} />)}

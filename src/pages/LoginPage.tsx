@@ -69,10 +69,10 @@ export function LoginPage() {
       <div className="relative hidden overflow-hidden border-r border-line bg-parchment lg:flex lg:flex-col lg:justify-between lg:p-12">
         <Logo />
         <div className="max-w-lg">
-          <p className="font-display text-[2.9rem] leading-[1.05] font-semibold text-ink">
+          <p className="animate-rise font-display text-[2.9rem] leading-[1.05] font-semibold text-ink">
             Toda campanha merece o seu próprio <em className="text-wine">compêndio de monstros</em>.
           </p>
-          <ul className="mt-10 space-y-5">
+          <ul className="stagger mt-10 space-y-5">
             {FEATURES.map(({ icon: Icon, title, text }) => (
               <li key={title} className="flex gap-4">
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-wine-line bg-wine-soft text-wine">
@@ -87,7 +87,7 @@ export function LoginPage() {
           </ul>
         </div>
         <p className="text-xs text-muted">Fichas compatíveis com Dungeons &amp; Dragons 5ª edição.</p>
-        <svg className="pointer-events-none absolute -right-24 -bottom-24 size-96 text-line" viewBox="0 0 200 200" aria-hidden>
+        <svg className="animate-spin-slow pointer-events-none absolute -right-24 -bottom-24 size-96 text-line" viewBox="0 0 200 200" aria-hidden>
           <circle cx="100" cy="100" r="96" fill="none" stroke="currentColor" strokeWidth="0.75" />
           <circle cx="100" cy="100" r="80" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 4" />
           <path d="M100 4v192M4 100h192M32 32l136 136M168 32L32 168" stroke="currentColor" strokeWidth="0.4" />

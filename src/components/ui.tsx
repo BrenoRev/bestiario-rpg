@@ -1,7 +1,7 @@
 // Componentes de interface reutilizáveis.
 import { Loader2 } from "lucide-react";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
-import { forwardRef, useId } from "react";
+import { forwardRef, useEffect, useId, useState } from "react";
 import type { GlossaryKey } from "../lib/glossary";
 import { HelpTip } from "./help/HelpTip";
 
@@ -23,10 +23,12 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: "sm" | "md";
   loading?: boolean;
   icon?: ReactNode;
+  /** Ícone mostrado durante `loading` no lugar do spinner (ex.: o d20 rolando nas ações de IA). */
+  busyIcon?: ReactNode;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = "secondary", size = "md", loading, icon, className, children, disabled, type = "button", ...rest },
+  { variant = "secondary", size = "md", loading, icon, busyIcon, className, children, disabled, type = "button", ...rest },
   ref,
 ) {
   return (
@@ -41,9 +43,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
         VARIANTS[variant],
         className,
       )}
+      aria-busy={loading || undefined}
       {...rest}
     >
-      {loading ? <Loader2 className="size-4 animate-spin" aria-hidden /> : icon}
+      {loading ? (busyIcon ?? <Loader2 className="size-4 animate-spin" aria-hidden />) : icon}
       {children}
     </button>
   );
@@ -254,6 +257,100 @@ export function Toggle({
       </span>
     </label>
     {help && <HelpTip term={help} className="mt-1" />}
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------ Movimento
+/** O usuário pediu ao sistema para reduzir animações. */
+export function prefersReducedMotion(): boolean {
+  return typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+}
+
+/**
+ * Mantém um elemento montado durante a animação de saída.
+ * `closing` fica verdadeiro nesse intervalo: use-o para trocar a classe de entrada pela de saída.
+ */
+export function usePresence(open: boolean, ms = 180): { mounted: boolean; closing: boolean } {
+  const [mounted, setMounted] = useState(open);
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      return;
+    }
+    if (prefersReducedMotion()) {
+      setMounted(false);
+      return;
+    }
+    const t = window.setTimeout(() => setMounted(false), ms);
+    return () => window.clearTimeout(t);
+  }, [open, ms]);
+  return { mounted: open || mounted, closing: !open && mounted };
+}
+
+/** Círculo rúnico: dois anéis girando em sentidos opostos. */
+function RuneCircle({ className }: { className?: string }) {
+  const ticks = Array.from({ length: 24 }, (_, i) => i * 15);
+  return (
+    <svg viewBox="0 0 100 100" className={className} aria-hidden>
+      <g className="origin-center animate-[turn_18s_linear_infinite]">
+        <circle cx="50" cy="50" r="47" fill="none" className="stroke-wine-line" strokeWidth="1" />
+        <circle cx="50" cy="50" r="41" fill="none" className="stroke-wine" strokeWidth="0.8" strokeDasharray="1 4.5" />
+        {ticks.map((a) => (
+          <path
+            key={a}
+            d={a % 45 === 0 ? "M50 3.5l1.6 3-1.6 3-1.6-3z" : "M50 4.5v3.5"}
+            transform={`rotate(${a} 50 50)`}
+            className={a % 45 === 0 ? "fill-wine stroke-none" : "stroke-wine-line"}
+            strokeWidth="1"
+          />
+        ))}
+      </g>
+      <g className="origin-center animate-[turn_11s_linear_infinite_reverse]">
+        <circle cx="50" cy="50" r="33" fill="none" className="stroke-wine-line" strokeWidth="0.8" />
+        <path d="M50 20 76 65H24z M50 80 24 35h52z" fill="none" className="stroke-wine" strokeWidth="1" strokeLinejoin="round" />
+      </g>
+      <circle cx="50" cy="50" r="7" className="fill-wine-soft stroke-wine animate-pulse" strokeWidth="1" />
+    </svg>
+  );
+}
+
+/**
+ * Espera de recurso de IA: círculo rúnico e frases que se alternam.
+ * `note` diz quanto costuma demorar (ex.: "Isso pode levar até um minuto.").
+ */
+export function ArcaneWait({
+  phrases,
+  note,
+  size = "md",
+  className,
+}: {
+  phrases: string[];
+  note: string;
+  size?: "sm" | "md";
+  className?: string;
+}) {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    if (phrases.length < 2) return;
+    const t = window.setInterval(() => setIndex((n) => (n + 1) % phrases.length), 3800);
+    return () => window.clearInterval(t);
+  }, [phrases.length]);
+  const sm = size === "sm";
+  return (
+    <div role="status" className={cx(sm ? "flex items-center gap-3 text-left" : "flex flex-col items-center gap-4 text-center", className)}>
+      <RuneCircle className={sm ? "size-11 shrink-0" : "size-24"} />
+      <div className="min-w-0">
+        <span className="sr-only">
+          {phrases[0]} {note}
+        </span>
+        <p key={index} aria-hidden className={cx("animate-rise font-display font-semibold text-ink", sm ? "text-lg leading-tight" : "text-2xl leading-snug")}>
+          {phrases[index]}
+        </p>
+        <p aria-hidden className="mt-0.5 text-xs text-muted">
+          {note}
+        </p>
+      </div>
     </div>
   );
 }

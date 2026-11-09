@@ -32,6 +32,12 @@
   --radius-card: 0.625rem;
   --shadow-soft: 0 1px 2px rgb(60 40 20 / 0.06), 0 2px 8px rgb(60 40 20 / 0.04);
   --shadow-pop: 0 8px 28px rgb(60 40 20 / 0.14);
+
+  /* Movimento: curva única e três durações. Use sempre estas variáveis. */
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-fast: 160ms;
+  --motion-base: 280ms;
+  --motion-slow: 520ms;
 }
 
 @layer base {
@@ -44,6 +50,17 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+  }
+  /* Papel envelhecido: grão bem fino e vinheta leve nas bordas, atrás de todo o conteúdo. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at 50% 40%, transparent 55%, rgb(90 60 30 / 0.09) 100%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.24 0 0 0 0 0.12 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   h1, h2, h3, h4 {
     font-family: var(--font-display);
@@ -144,6 +161,50 @@
   .prose-sheet p + p {
     margin-top: 0.6rem;
   }
+
+  /* Cantoneiras finas de livro antigo (ficha mecânica). Só os quatro cantos de uma moldura interna. */
+  .ornate {
+    position: relative;
+  }
+  .ornate::before {
+    content: "";
+    position: absolute;
+    inset: 0.4rem;
+    border: 1px solid var(--color-wine-line);
+    border-radius: calc(var(--radius-card) - 0.25rem);
+    pointer-events: none;
+    --corner: 1.1rem;
+    mask:
+      linear-gradient(#000 0 0) top left / var(--corner) var(--corner) no-repeat,
+      linear-gradient(#000 0 0) top right / var(--corner) var(--corner) no-repeat,
+      linear-gradient(#000 0 0) bottom left / var(--corner) var(--corner) no-repeat,
+      linear-gradient(#000 0 0) bottom right / var(--corner) var(--corner) no-repeat;
+  }
+
+  /* Capitular da Crônica. */
+  .drop-cap::first-letter {
+    float: left;
+    font-family: var(--font-display);
+    font-size: 3.4em;
+    font-weight: 700;
+    line-height: 0.82;
+    color: var(--color-wine);
+    padding: 0.06em 0.1em 0 0;
+  }
+
+  /* Reflexo que atravessa a ilustração no hover do cartão (pai com `group`). */
+  .glint::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent 38%, rgb(255 248 235 / 0.38) 50%, transparent 62%);
+    transform: translateX(-110%);
+  }
+  .group:hover .glint::after {
+    transform: translateX(110%);
+    transition: transform 0.9s var(--motion-ease);
+  }
 }
 
 /* Botão nativo de limpar a busca nas cores do tema (o padrão do navegador é azul) */
@@ -175,4 +236,156 @@ input[type="search"]::-webkit-search-cancel-button {
   background: linear-gradient(90deg, var(--color-sand) 0px, var(--color-parchment) 160px, var(--color-sand) 320px);
   background-size: 800px 100%;
   animation: shimmer 1.4s infinite linear;
+}
+
+/* ------------------------------------------------------------------
+   Movimento. Só transform, opacity e clip-path (baratos para o navegador).
+   Tudo é desligado por prefers-reduced-motion no fim do arquivo.
+   ------------------------------------------------------------------ */
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+/* Tinta se espalhando da esquerda para a direita. */
+@keyframes ink {
+  from { clip-path: inset(0 100% 0 0); opacity: 0.5; }
+  to { clip-path: inset(0 0 0 0); opacity: 1; }
+}
+/* Linha riscada a pena. */
+@keyframes rule-draw {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+/* Selo de cera carimbado. */
+@keyframes stamp {
+  0% { opacity: 0; transform: scale(1.9) rotate(-20deg); }
+  60% { opacity: 1; transform: scale(0.9) rotate(4deg); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes flash {
+  from { background-color: var(--color-moss-soft); border-color: var(--color-moss-line); }
+}
+@keyframes turn {
+  to { transform: rotate(360deg); }
+}
+/* Dado rolando. */
+@keyframes roll {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(200deg) scale(0.82); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+/* Brasa pulsando em volta do selo de ameaça mortal. */
+@keyframes ember {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(107 29 42 / 0); }
+  50% { box-shadow: 0 0 0 4px rgb(107 29 42 / 0.2); }
+}
+@keyframes sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes sheet-out {
+  to { transform: translateY(100%); }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pop-out {
+  to { opacity: 0; transform: translateY(4px) scale(0.98); }
+}
+@keyframes drawer-in {
+  from { transform: translateX(-100%); }
+  to { transform: none; }
+}
+@keyframes drawer-out {
+  to { transform: translateX(-100%); }
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes toast-out {
+  to { opacity: 0; transform: translateX(24px); }
+}
+
+.animate-fade-out { animation: fade-out var(--motion-fast) ease-in both; }
+.animate-rise { animation: rise var(--motion-base) var(--motion-ease) backwards; }
+.animate-ink { animation: ink var(--motion-slow) var(--motion-ease) backwards; }
+.animate-stamp { animation: stamp 0.5s var(--motion-ease) backwards; }
+.animate-flash { animation: flash 0.9s ease-out; }
+.animate-spin-slow { animation: turn 90s linear infinite; }
+.animate-roll { animation: roll 0.9s var(--motion-ease) infinite; }
+.animate-ember { animation: ember 2.4s ease-in-out infinite; }
+.animate-drawer-in { animation: drawer-in var(--motion-base) var(--motion-ease) backwards; }
+.animate-drawer-out { animation: drawer-out var(--motion-fast) ease-in both; }
+.animate-toast-in { animation: toast-in var(--motion-base) var(--motion-ease) backwards; }
+.animate-toast-out { animation: toast-out var(--motion-fast) ease-in both; }
+/* Modal: sobe como folha no celular; no desktop surge com leve escala. */
+.animate-modal-in { animation: sheet-in var(--motion-base) var(--motion-ease) backwards; }
+.animate-modal-out { animation: sheet-out var(--motion-fast) ease-in both; }
+@media (min-width: 40rem) {
+  .animate-modal-in { animation-name: pop-in; }
+  .animate-modal-out { animation-name: pop-out; }
+}
+
+/* Entrada em cascata: grades (.stagger) e blocos da ficha (.sheet-reveal). */
+:is(.stagger, .sheet-reveal) > * { animation: rise var(--motion-base) var(--motion-ease) backwards; }
+:is(.stagger, .sheet-reveal) > :nth-child(2) { animation-delay: 45ms; }
+:is(.stagger, .sheet-reveal) > :nth-child(3) { animation-delay: 90ms; }
+:is(.stagger, .sheet-reveal) > :nth-child(4) { animation-delay: 135ms; }
+:is(.stagger, .sheet-reveal) > :nth-child(5) { animation-delay: 180ms; }
+:is(.stagger, .sheet-reveal) > :nth-child(6) { animation-delay: 225ms; }
+:is(.stagger, .sheet-reveal) > :nth-child(7) { animation-delay: 270ms; }
+:is(.stagger, .sheet-reveal) > :nth-child(8) { animation-delay: 315ms; }
+:is(.stagger, .sheet-reveal) > :nth-child(9) { animation-delay: 360ms; }
+:is(.stagger, .sheet-reveal) > :nth-child(10) { animation-delay: 405ms; }
+:is(.stagger, .sheet-reveal) > :nth-child(11) { animation-delay: 450ms; }
+:is(.stagger, .sheet-reveal) > :nth-child(n + 12) { animation-delay: 495ms; }
+.sheet-reveal > .stat-rule {
+  animation-name: rule-draw;
+  animation-duration: var(--motion-slow);
+  transform-origin: left;
+}
+
+/* Troca de página (React Router `viewTransition`): o conteúdo sai e o novo sobe;
+   barra lateral e topo trocam sem animação. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-old(page) { animation: fade-out var(--motion-fast) ease-in both; }
+::view-transition-new(page) { animation: rise var(--motion-base) var(--motion-ease) backwards; }
+/* Elementos compartilhados: a ilustração do cartão "voa" até a página. */
+::view-transition-group(creature-image),
+::view-transition-group(universe-cover),
+::view-transition-group(creature-name) {
+  animation-duration: var(--motion-slow);
+  animation-timing-function: var(--motion-ease);
+}
+::view-transition-old(creature-image),
+::view-transition-new(creature-image),
+::view-transition-old(universe-cover),
+::view-transition-new(universe-cover) {
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
 }

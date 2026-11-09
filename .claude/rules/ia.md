@@ -24,7 +24,7 @@ paths:
 - Ajuste em ficha: `AIAssistModal` → `DiffReview` → `onApply`. Pedido rápido novo entra em `PRESETS` (`AIAssist.tsx`).
 - Variações: `VariationsModal` (na ficha) ou `VariationRequest` (em "Criar com IA"), sempre como **nova** criatura.
 - Combinação de propostas: `CombineModal` reaproveita o `DiffReview`.
-- Toda espera de IA mostra o aviso de duração com o ícone `Sparkles` pulsando, e o modal fica com `busy`.
+- Toda espera de IA usa `ArcaneWait` (de `ui.tsx`) com o aviso de duração em `note`, o botão que disparou mostra o d20 rolando (`busyIcon`), e o modal fica com `busy`. As frases são de ofício ("Rolando os Dados de Vida…"), nunca dizem que a IA decide.
 - Preferências do usuário (`profiles.preferences`: criatividade, detalhamento, número de propostas, contexto do universo) são o valor inicial dos controles.
 - "Usar contexto do universo" vem ligado por padrão.
 

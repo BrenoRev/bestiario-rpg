@@ -17,7 +17,7 @@ As regras por tema ficam em `.claude/rules/`. As marcadas "sempre" carregam em t
 | `git.md` | branches, commits, Pull Requests | sempre |
 | `codigo.md` | estilo de TypeScript, nomes, exports, comentários | `src/**`, `supabase/functions/**` |
 | `frontend.md` | páginas, leitura e escrita de dados, Storage, estado | `src/**` |
-| `design.md` | identidade visual, tokens, componentes, acessibilidade | `src/**/*.tsx`, `src/index.css` |
+| `design.md` | identidade visual, tokens, componentes, movimento, acessibilidade | `src/**/*.tsx`, `src/index.css` |
 | `ficha-dnd.md` | regras de D&D 5e e checklists de campo novo | `src/lib/**`, telas e componentes da ficha, `supabase/**` |
 | `ia.md` | princípios e implementação dos recursos de IA | `src/lib/ai.ts`, telas de IA, `supabase/functions/**` |
 | `banco-de-dados.md` | migrações, RLS, Storage, autenticação | `supabase/migrations/**`, `supabase/config.toml` |
@@ -100,7 +100,8 @@ vercel.json         deploy do frontend (reescrita SPA, cabeçalhos, cache)
 | Ler dados | função em `src/lib/api.ts` + hook em `src/hooks/queries.ts` |
 | Gravar dados | função em `src/lib/api.ts` + o bloco try/catch/toast de `.claude/rules/frontend.md` |
 | Modal, confirmação, aviso | `Modal` e `ConfirmDialog` (`src/components/Modal.tsx`), `useToast` (`src/components/Toast.tsx`) |
-| Recurso de IA na interface | `src/lib/ai.ts` + `AIAssistModal` / `DiffReview` (`src/components/creature/AIAssist.tsx`) |
+| Recurso de IA na interface | `src/lib/ai.ts` + `AIAssistModal` / `DiffReview` (`src/components/creature/AIAssist.tsx`); espera com `ArcaneWait` |
+| Animação, transição de página | seção "Movimento" de `.claude/rules/design.md` |
 | Ação de IA nova no servidor | `supabase/functions/ai-creature/index.ts` |
 | Campo novo na ficha ou no universo | checklists em `.claude/rules/ficha-dnd.md` |
 | Tabela nova | modelo de migração em `.claude/rules/banco-de-dados.md` |
@@ -119,7 +120,7 @@ Interface, comentários e documentação em **português do Brasil**; identifica
 3. Imagens só são geradas com um clique explícito do usuário.
 4. Cada usuário só vê e altera os próprios dados: RLS em toda tabela, arquivos em `<user_id>/…`, chaves de API só nos secrets das Edge Functions.
 5. As fichas seguem D&D 5e.
-6. O visual é de bestiário antigo, mas limpo: tokens de `src/index.css`, bordas finas, sem ornamento nem sombra pesada.
+6. O visual é de bestiário antigo, com vida mas sem exagero: tokens de `src/index.css`, bordas finas, ornamentos finos e só os já previstos, movimento em CSS que respeita `prefers-reduced-motion`, sem sombra pesada (`.claude/rules/design.md`).
 
 ## Pronto quando
 

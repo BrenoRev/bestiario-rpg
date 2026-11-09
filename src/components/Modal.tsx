@@ -2,7 +2,7 @@ import { X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Button, cx, IconButton } from "./ui";
+import { Button, cx, IconButton, usePresence } from "./ui";
 
 interface ModalProps {
   open: boolean;
@@ -20,6 +20,8 @@ const SIZES = { sm: "max-w-md", md: "max-w-xl", lg: "max-w-3xl", xl: "max-w-5xl"
 
 export function Modal({ open, onClose, title, description, children, footer, size = "md", busy }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  // Fica montado durante a animação de saída.
+  const { mounted, closing } = usePresence(open);
   // Refs evitam re-executar o efeito a cada render do pai (o que roubava o foco de quem digita).
   const onCloseRef = useRef(onClose);
   const busyRef = useRef(busy);
@@ -42,18 +44,23 @@ export function Modal({ open, onClose, title, description, children, footer, siz
     };
   }, [open]);
 
-  if (!open) return null;
+  if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6">
-      <div className="absolute inset-0 bg-ink/40 backdrop-blur-[1px]" onClick={() => !busy && onClose()} aria-hidden />
+    <div className={cx("fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6", closing && "pointer-events-none")}>
+      <div
+        className={cx("absolute inset-0 bg-ink/40 backdrop-blur-[1px]", closing ? "animate-fade-out" : "animate-fade-in")}
+        onClick={() => !busy && onClose()}
+        aria-hidden
+      />
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         tabIndex={-1}
         className={cx(
-          "animate-fade-in relative flex max-h-[92vh] w-full flex-col rounded-t-xl border border-line bg-cream shadow-[var(--shadow-pop)] outline-none sm:rounded-xl",
+          closing ? "animate-modal-out" : "animate-modal-in",
+          "relative flex max-h-[92vh] w-full flex-col rounded-t-xl border border-line bg-cream shadow-[var(--shadow-pop)] outline-none sm:rounded-xl",
           SIZES[size],
         )}
       >

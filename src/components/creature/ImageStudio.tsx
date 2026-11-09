@@ -10,7 +10,7 @@ import type { CreatureDraft, CreatureImage } from "../../lib/types";
 import { StoredImage } from "../brand";
 import { ConfirmDialog } from "../Modal";
 import { errorMessage, useToast } from "../Toast";
-import { Badge, Button, cx, IconButton } from "../ui";
+import { ArcaneWait, Badge, Button, cx, IconButton } from "../ui";
 
 interface ImageStudioProps {
   universeId: string;
@@ -23,9 +23,22 @@ interface ImageStudioProps {
   /** Versões criadas no modo rascunho, para vincular quando a criatura for salva. */
   onDraftVersions?: (images: CreatureImage[]) => void;
   initialDraftVersions?: CreatureImage[];
+  /** Nome da transição de página da ilustração (só na página de detalhe). */
+  transitionName?: string;
 }
 
-export function ImageStudio({ universeId, creatureId, creature, currentPath, onSelect, onDraftVersions, initialDraftVersions }: ImageStudioProps) {
+const ILLUSTRATING = ["Ilustrando a criatura…", "Preparando a tinta…", "Esboçando a silhueta…", "Sombreando a gravura…"];
+
+export function ImageStudio({
+  universeId,
+  creatureId,
+  creature,
+  currentPath,
+  onSelect,
+  onDraftVersions,
+  initialDraftVersions,
+  transitionName,
+}: ImageStudioProps) {
   const toast = useToast();
   const qc = useQueryClient();
   const { data: savedVersions = [] } = useCreatureImages(creatureId);
@@ -41,6 +54,8 @@ export function ImageStudio({ universeId, creatureId, creature, currentPath, onS
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [toDelete, setToDelete] = useState<CreatureImage | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  // A imagem com que a tela abriu não se revela: ela pode estar chegando pela transição de página.
+  const openingPath = useRef(currentPath).current;
 
   useEffect(() => setPreviewPath(currentPath), [currentPath]);
   useEffect(() => onDraftVersions?.(draftVersions), [draftVersions, onDraftVersions]);
@@ -124,13 +139,18 @@ export function ImageStudio({ universeId, creatureId, creature, currentPath, onS
 
   return (
     <section className="card overflow-hidden" aria-label="Ilustração">
-      <div className="relative aspect-square border-b border-line bg-parchment">
-        <StoredImage path={previewPath} alt={`Ilustração de ${creature.name}`} className="size-full" fallbackLabel="Sem ilustração" />
+      <div className="relative aspect-square overflow-hidden border-b border-line bg-parchment" style={{ viewTransitionName: transitionName }}>
+        {/* A key remonta a imagem ao trocar de versão: a nova se revela como tinta. */}
+        <StoredImage
+          key={previewPath ?? "vazio"}
+          path={previewPath}
+          alt={`Ilustração de ${creature.name}`}
+          className={cx("size-full", previewPath !== openingPath && "animate-ink")}
+          fallbackLabel="Sem ilustração"
+        />
         {generating && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-parchment/85 px-6 text-center backdrop-blur-[2px]">
-            <Sparkles className="size-7 animate-pulse text-wine" />
-            <p className="font-display text-xl font-semibold text-ink">Ilustrando a criatura…</p>
-            <p className="text-xs text-muted">A geração costuma levar de 30 segundos a 1 minuto.</p>
+          <div className="animate-fade-in absolute inset-0 flex items-center justify-center bg-parchment/85 px-6 backdrop-blur-[2px]">
+            <ArcaneWait phrases={ILLUSTRATING} note="A geração costuma levar de 30 segundos a 1 minuto." />
           </div>
         )}
         {previewPath && !generating && (
