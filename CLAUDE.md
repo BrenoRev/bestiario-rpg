@@ -127,7 +127,8 @@ Interface, comentários e documentação em **português do Brasil**; identifica
 - [ ] Mexeu em `supabase/functions/`: `npm run check:functions` passa.
 - [ ] Mexeu em `supabase/migrations/`: `npx supabase db reset` aplica sem erro e `npm run test:rls` passa.
 - [ ] Lógica nova em `src/lib/` tem teste em `*.test.ts` ao lado.
-- [ ] Tela nova ou alterada tem estado de carregamento, de erro e de vazio, e funciona a 390 px de largura sem rolagem horizontal.
+- [ ] Tela nova ou alterada tem estado de carregamento, de erro e de vazio, e funciona a 360 px de largura sem rolagem horizontal e com alvos de toque de pelo menos 36 px.
+- [ ] Termo técnico novo na interface tem entrada no glossário e ícone de ajuda.
 - [ ] Ação destrutiva pede confirmação com `ConfirmDialog`; ação com rede mostra carregamento e trata erro com toast.
 - [ ] Textos em pt-BR, ícones do lucide-react, cores pelos tokens.
 - [ ] Se um padrão mudou com aprovação, o `CLAUDE.md` ou a regra em `.claude/rules/` foi atualizado.

@@ -123,7 +123,7 @@ export function BestiaryBrowser({ universeId }: { universeId: string }) {
                 </option>
               ))}
             </Select>
-            <Select label="Nível de ameaça" value={threat} onChange={(e) => setThreat(e.target.value)}>
+            <Select label="Nível de ameaça" help="ameaca" value={threat} onChange={(e) => setThreat(e.target.value)}>
               <option value="">Todos</option>
               {THREAT_LEVELS.map((t) => (
                 <option key={t.value} value={t.value}>

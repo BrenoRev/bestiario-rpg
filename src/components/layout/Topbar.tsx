@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { Check, ChevronDown, Globe2, LogOut, Plus, Search, Settings } from "lucide-react";
+import { BookOpen, Check, ChevronDown, Compass, Globe2, HelpCircle, LogOut, Plus, Search, Settings } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
+import { useHelp } from "../../context/HelpContext";
 import { useCurrentUniverse } from "../../context/UniverseContext";
 import { useProfile } from "../../hooks/queries";
 import { searchCreatures } from "../../lib/api";
@@ -91,7 +92,7 @@ function GlobalSearch() {
             setOpen(false);
           }
         }}
-        placeholder="Buscar criaturas e universos…"
+        placeholder="Buscar no bestiário…"
         aria-label="Buscar criaturas e universos"
         className="field h-10 pl-9"
       />
@@ -205,6 +206,51 @@ export function UniverseSwitcher() {
   );
 }
 
+function HelpMenu() {
+  const { openGuide, openGlossary } = useHelp();
+  return (
+    <Dropdown
+      trigger={(open) => (
+        <button
+          type="button"
+          aria-label="Ajuda"
+          title="Ajuda"
+          aria-expanded={open}
+          className="inline-flex size-10 shrink-0 items-center justify-center rounded-full text-ink-soft hover:bg-sand/70 hover:text-wine cursor-pointer"
+        >
+          <HelpCircle className="size-5" />
+        </button>
+      )}
+    >
+      {(close) => (
+        <>
+          <div className="px-4 pb-1 pt-2 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted">Ajuda</div>
+          <button
+            type="button"
+            className={menuItem}
+            onClick={() => {
+              close();
+              openGuide();
+            }}
+          >
+            <Compass className="size-4" /> Guia rápido do Bestiario
+          </button>
+          <button
+            type="button"
+            className={menuItem}
+            onClick={() => {
+              close();
+              openGlossary();
+            }}
+          >
+            <BookOpen className="size-4" /> Glossário de termos de RPG
+          </button>
+        </>
+      )}
+    </Dropdown>
+  );
+}
+
 function ProfileMenu() {
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile();
@@ -247,6 +293,7 @@ export function Topbar({ menuButton }: { menuButton: ReactNode }) {
         <div className="flex flex-1 justify-end md:justify-center">
           <GlobalSearch />
         </div>
+        <HelpMenu />
         <ProfileMenu />
       </div>
     </header>

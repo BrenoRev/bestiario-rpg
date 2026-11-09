@@ -4,7 +4,7 @@ import { NavLink, Outlet, useLocation } from "react-router";
 import { useCurrentUniverse } from "../../context/UniverseContext";
 import { Logo, StoredImage } from "../brand";
 import { cx, IconButton, PageLoader } from "../ui";
-import { Topbar } from "./Topbar";
+import { Topbar, UniverseSwitcher } from "./Topbar";
 
 const NAV = [
   { to: "/", label: "Meus Mundos", icon: Globe2, end: true },
@@ -20,6 +20,12 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       <div className="px-5 pt-5 pb-6">
         <Logo />
       </div>
+      {/* No celular o seletor do topo some: a troca de universo fica aqui no menu. */}
+      {onNavigate && (
+        <div className="px-3 pb-4 md:hidden">
+          <UniverseSwitcher />
+        </div>
+      )}
       <nav className="flex flex-col gap-0.5 px-3" aria-label="Navegação principal">
         {NAV.map(({ to, label, icon: Icon, end }) => (
           <NavLink

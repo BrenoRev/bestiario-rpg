@@ -146,6 +146,13 @@
   }
 }
 
+/* Botão nativo de limpar a busca nas cores do tema (o padrão do navegador é azul) */
+input[type="search"]::-webkit-search-cancel-button {
+  filter: grayscale(1) sepia(0.6);
+  opacity: 0.6;
+  cursor: pointer;
+}
+
 /* Barras de rolagem discretas */
 * {
   scrollbar-width: thin;

@@ -8,6 +8,7 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { ToastProvider } from "./components/Toast";
 import { Button, EmptyState, PageLoader } from "./components/ui";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { HelpProvider } from "./context/HelpContext";
 import { UniverseProvider } from "./context/UniverseContext";
 import { isSupabaseConfigured } from "./lib/supabase";
 import { LoginPage } from "./pages/LoginPage";
@@ -57,7 +58,9 @@ function RequireAuth() {
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   return (
     <UniverseProvider>
-      <AppLayout />
+      <HelpProvider>
+        <AppLayout />
+      </HelpProvider>
     </UniverseProvider>
   );
 }

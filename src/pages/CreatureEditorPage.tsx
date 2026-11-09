@@ -1,7 +1,7 @@
 // Criação e edição manual de fichas. Também recebe rascunhos vindos da IA
 // ("Editar manualmente") via location.state.
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, Sparkles } from "lucide-react";
+import { ArrowLeft, HelpCircle, Lightbulb, Save, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useBlocker, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { AIAssistModal } from "../components/creature/AIAssist";
@@ -10,6 +10,7 @@ import { ImageStudio } from "../components/creature/ImageStudio";
 import { ConfirmDialog } from "../components/Modal";
 import { errorMessage, useToast } from "../components/Toast";
 import { Button, EmptyState, ErrorState, PageHeader, PageLoader, Select } from "../components/ui";
+import { useHelp } from "../context/HelpContext";
 import { useCurrentUniverse } from "../context/UniverseContext";
 import { keys, useCreature } from "../hooks/queries";
 import { attachImagesToCreature, createCreature, updateCreature } from "../lib/api";
@@ -33,6 +34,7 @@ export function CreatureEditorPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const qc = useQueryClient();
+  const { showHelp } = useHelp();
 
   const [draft, setDraft] = useState<CreatureDraft | null>(null);
   const [initial, setInitial] = useState<string>("");
@@ -131,10 +133,22 @@ export function CreatureEditorPage() {
   }
   if (!draft) return <PageLoader />;
 
+  const universeSelect = (className: string) => (
+    <div className={className}>
+      <Select label="Universo" value={universeId} onChange={(e) => setUniverseId(e.target.value)}>
+        {universes.map((u) => (
+          <option key={u.id} value={u.id}>
+            {u.name}
+          </option>
+        ))}
+      </Select>
+    </div>
+  );
+
   const actions = (
     <>
-      <Button icon={<Sparkles className="size-4" />} onClick={() => setAssist(true)} disabled={!universeId}>
-        Assistente de IA
+      <Button icon={<Sparkles className="size-4" />} onClick={() => setAssist(true)} disabled={!universeId} aria-label="Assistente de IA" title="Assistente de IA">
+        <span className="hidden sm:inline">Assistente de IA</span>
       </Button>
       <Button variant="primary" icon={<Save className="size-4" />} onClick={save} loading={saving}>
         {editing ? "Salvar ficha" : "Salvar no bestiário"}
@@ -144,7 +158,7 @@ export function CreatureEditorPage() {
 
   return (
     <>
-      <button type="button" onClick={() => navigate(-1)} className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink cursor-pointer">
+      <button type="button" onClick={() => navigate(-1)} className="mb-2 -ml-1 inline-flex min-h-9 items-center gap-1.5 px-1 text-sm text-muted hover:text-ink cursor-pointer">
         <ArrowLeft className="size-4" /> Voltar
       </button>
       <PageHeader
@@ -154,20 +168,24 @@ export function CreatureEditorPage() {
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
-        <CreatureForm value={draft} onChange={setDraft} />
-
-        <aside className="side-panel space-y-4 [--side-panel-offset:12rem]">
-          {!editing && (
-            <div className="card p-4">
-              <Select label="Universo" value={universeId} onChange={(e) => setUniverseId(e.target.value)}>
-                {universes.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name}
-                  </option>
-                ))}
-              </Select>
+        <div className="min-w-0 space-y-5">
+          {/* No celular a escolha do universo vem antes da ficha (no desktop fica no painel lateral). */}
+          {!editing && universeSelect("card p-4 lg:hidden")}
+          {!editing && !incoming.draft && showHelp && (
+            <div className="flex gap-3 rounded-[var(--radius-card)] border border-wine-line bg-wine-soft/60 px-4 py-3.5 text-sm leading-relaxed text-ink-soft">
+              <Lightbulb className="mt-0.5 size-5 shrink-0 text-wine" />
+              <p>
+                <strong className="text-ink">Primeira vez?</strong> Você não precisa preencher tudo. Dê um <strong>nome</strong>, escreva a{" "}
+                <strong>aparência</strong> no fim da página e toque em <Sparkles className="inline size-4 align-text-bottom text-wine" />{" "}
+                <strong>Assistente de IA</strong> para completar os números. Os ícones <HelpCircle className="inline size-4 align-text-bottom text-wine" /> explicam cada termo.
+              </p>
             </div>
           )}
+          <CreatureForm value={draft} onChange={setDraft} />
+        </div>
+
+        <aside className="side-panel space-y-4 [--side-panel-offset:12rem]">
+          {!editing && universeSelect("card hidden p-4 lg:block")}
           {universeId && (
             <ImageStudio
               universeId={universeId}

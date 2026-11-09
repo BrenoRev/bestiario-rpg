@@ -2,6 +2,8 @@
 import { Loader2 } from "lucide-react";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { forwardRef, useId } from "react";
+import type { GlossaryKey } from "../lib/glossary";
+import { HelpTip } from "./help/HelpTip";
 
 const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 export { cx };
@@ -59,7 +61,7 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={cx(
-        "inline-flex size-9 items-center justify-center rounded-lg text-ink-soft hover:bg-sand/70 hover:text-ink transition-colors cursor-pointer disabled:opacity-50",
+        "inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-ink-soft hover:bg-sand/70 hover:text-ink transition-colors cursor-pointer disabled:opacity-50",
         className,
       )}
       {...rest}
@@ -73,30 +75,47 @@ export function IconButton({
 interface FieldShellProps {
   label?: string;
   hint?: ReactNode;
+  /** Termo do glossário explicado por um ícone "?" ao lado do rótulo. */
+  help?: GlossaryKey;
   className?: string;
   children: (id: string) => ReactNode;
 }
 
-export function FieldShell({ label, hint, className, children }: FieldShellProps) {
+/** Rótulo de campo, com o ícone de ajuda fora do <label> (botão dentro de label é inválido). */
+export function FieldLabel({ htmlFor, label, help }: { htmlFor?: string; label: string; help?: GlossaryKey }) {
+  if (!help) {
+    return (
+      <label htmlFor={htmlFor} className="label">
+        {label}
+      </label>
+    );
+  }
+  return (
+    <div className="mb-[0.35rem] flex items-center gap-1">
+      <label htmlFor={htmlFor} className="label mb-0">
+        {label}
+      </label>
+      <HelpTip term={help} />
+    </div>
+  );
+}
+
+export function FieldShell({ label, hint, help, className, children }: FieldShellProps) {
   const id = useId();
   return (
     <div className={className}>
-      {label && (
-        <label htmlFor={id} className="label">
-          {label}
-        </label>
-      )}
+      {label && <FieldLabel htmlFor={id} label={label} help={help} />}
       {children(id)}
       {hint && <p className="hint">{hint}</p>}
     </div>
   );
 }
 
-type WithLabel = { label?: string; hint?: ReactNode; wrapperClassName?: string };
+type WithLabel = { label?: string; hint?: ReactNode; help?: GlossaryKey; wrapperClassName?: string };
 
-export function TextInput({ label, hint, wrapperClassName, className, ...rest }: InputHTMLAttributes<HTMLInputElement> & WithLabel) {
+export function TextInput({ label, hint, help, wrapperClassName, className, ...rest }: InputHTMLAttributes<HTMLInputElement> & WithLabel) {
   return (
-    <FieldShell label={label} hint={hint} className={wrapperClassName}>
+    <FieldShell label={label} hint={hint} help={help} className={wrapperClassName}>
       {(id) => <input id={id} className={cx("field", className)} {...rest} />}
     </FieldShell>
   );
@@ -105,6 +124,7 @@ export function TextInput({ label, hint, wrapperClassName, className, ...rest }:
 export function NumberInput({
   label,
   hint,
+  help,
   wrapperClassName,
   className,
   value,
@@ -112,7 +132,7 @@ export function NumberInput({
   ...rest
 }: Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange"> & WithLabel & { value: number; onValue: (n: number) => void }) {
   return (
-    <FieldShell label={label} hint={hint} className={wrapperClassName}>
+    <FieldShell label={label} hint={hint} help={help} className={wrapperClassName}>
       {(id) => (
         <input
           id={id}
@@ -128,9 +148,9 @@ export function NumberInput({
   );
 }
 
-export function TextArea({ label, hint, wrapperClassName, className, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement> & WithLabel) {
+export function TextArea({ label, hint, help, wrapperClassName, className, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement> & WithLabel) {
   return (
-    <FieldShell label={label} hint={hint} className={wrapperClassName}>
+    <FieldShell label={label} hint={hint} help={help} className={wrapperClassName}>
       {(id) => <textarea id={id} className={cx("field min-h-24 resize-y leading-relaxed", className)} {...rest} />}
     </FieldShell>
   );
@@ -139,13 +159,14 @@ export function TextArea({ label, hint, wrapperClassName, className, ...rest }: 
 export function Select({
   label,
   hint,
+  help,
   wrapperClassName,
   className,
   children,
   ...rest
 }: SelectHTMLAttributes<HTMLSelectElement> & WithLabel) {
   return (
-    <FieldShell label={label} hint={hint} className={wrapperClassName}>
+    <FieldShell label={label} hint={hint} help={help} className={wrapperClassName}>
       {(id) => (
         <select id={id} className={cx("field cursor-pointer pr-8", className)} {...rest}>
           {children}
@@ -158,18 +179,20 @@ export function Select({
 /** Controle segmentado (opções exclusivas). */
 export function Segmented<T extends string>({
   label,
+  help,
   value,
   options,
   onChange,
 }: {
   label?: string;
+  help?: GlossaryKey;
   value: T;
   options: { value: T; label: string; hint?: string }[];
   onChange: (v: T) => void;
 }) {
   return (
     <div>
-      {label && <span className="label">{label}</span>}
+      {label && <FieldLabel label={label} help={help} />}
       <div role="radiogroup" aria-label={label} className="flex rounded-lg border border-line bg-parchment p-0.5">
         {options.map((o) => (
           <button
@@ -180,7 +203,7 @@ export function Segmented<T extends string>({
             title={o.hint}
             onClick={() => onChange(o.value)}
             className={cx(
-              "flex-1 rounded-md px-2.5 py-1.5 text-[0.8rem] font-medium transition-colors cursor-pointer",
+              "min-h-9 min-w-0 flex-1 rounded-md px-1.5 py-1.5 text-[0.78rem] leading-tight font-medium transition-colors cursor-pointer sm:px-2.5 sm:text-[0.8rem]",
               value === o.value ? "bg-cream text-wine shadow-[var(--shadow-soft)] border border-line" : "text-muted hover:text-ink border border-transparent",
             )}
           >
@@ -197,13 +220,16 @@ export function Toggle({
   onChange,
   label,
   description,
+  help,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   label: string;
   description?: string;
+  help?: GlossaryKey;
 }) {
   return (
+    <div className="flex items-start gap-1">
     <label className="flex cursor-pointer items-start gap-3">
       <button
         type="button"
@@ -227,6 +253,8 @@ export function Toggle({
         {description && <span className="block text-xs text-muted">{description}</span>}
       </span>
     </label>
+    {help && <HelpTip term={help} className="mt-1" />}
+    </div>
   );
 }
 
