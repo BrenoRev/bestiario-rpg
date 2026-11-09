@@ -11,7 +11,7 @@
 import { loadUniverse, requireUser } from "../_shared/auth.ts";
 import { callJson } from "../_shared/llm.ts";
 import { consumeQuota } from "../_shared/quota.ts";
-import { CR_TABLE, CREATURE_SCHEMA, describeUniverse, normalizeCreature, TYPES } from "../_shared/creature.ts";
+import { CR_TABLE, CREATURE_SCHEMA, CRS, describeUniverse, HABITATS, normalizeCreature, SIZES, TYPES } from "../_shared/creature.ts";
 import { HttpError, json, readJson, serve } from "../_shared/http.ts";
 
 type Creativity = "convencional" | "equilibrado" | "inusitado";
@@ -63,6 +63,13 @@ Equilíbrio mecânico (D&D 5e)
 - Listas sem conteúdo devem vir vazias; não invente entradas só para preencher.
 
 ${CR_TABLE}
+
+Códigos aceitos nos campos da ficha (use exatamente estes valores, em inglês):
+- size: ${SIZES.join(", ")}
+- creature_type: ${TYPES.join(", ")}
+- challenge_rating: ${CRS.join(", ")}
+- habitat_tags: ${HABITATS.join(", ")}
+- saving_throws[].ability: str, dex, con, int, wis, cha
 
 Narrativa
 - A descrição narrativa (aparência, habitat, comportamento, alimentação, origem, curiosidades e fraquezas) deve ser útil à mesa: ganchos de aventura, sinais que os jogadores podem perceber, como a criatura luta e como pode ser vencida.

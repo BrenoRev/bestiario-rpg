@@ -1,7 +1,6 @@
-// Escolha do provedor de texto das Edge Functions e adaptação do esquema para a Anthropic.
+// Escolha do provedor de texto das Edge Functions e leitura do JSON no modo sem gramática (Anthropic).
 import { describe, expect, it } from "vitest";
-import { CREATURE_SCHEMA } from "../../supabase/functions/_shared/creature.ts";
-import { pickTextProvider, stripForAnthropic } from "../../supabase/functions/_shared/provider.ts";
+import { extractJsonObject, pickTextProvider } from "../../supabase/functions/_shared/provider.ts";
 
 describe("pickTextProvider", () => {
   it("usa a OpenAI quando a chave dela existe", () => {
@@ -22,25 +21,22 @@ describe("pickTextProvider", () => {
   });
 });
 
-describe("stripForAnthropic", () => {
-  it("remove restrições não aceitas em qualquer profundidade e mantém o resto", () => {
-    const schema = {
-      type: "object",
-      properties: {
-        alternatives: { type: "array", minItems: 1, maxItems: 3, items: { type: "object", properties: { n: { type: "integer", minimum: 0 } } } },
-        size: { type: "string", enum: ["a", "b"] },
-      },
-      required: ["alternatives", "size"],
-      additionalProperties: false,
-    };
-    const out = stripForAnthropic(schema);
-    expect(JSON.stringify(out)).not.toMatch(/minItems|maxItems|minimum/);
-    expect(out.properties.size.enum).toEqual(["a", "b"]);
-    expect(out.required).toEqual(["alternatives", "size"]);
-    expect(out.additionalProperties).toBe(false);
+describe("extractJsonObject", () => {
+  it("lê JSON puro", () => {
+    expect(extractJsonObject('{"a":1}')).toEqual({ a: 1 });
   });
 
-  it("não altera o esquema da ficha, que já é compatível", () => {
-    expect(stripForAnthropic(CREATURE_SCHEMA)).toEqual(CREATURE_SCHEMA);
+  it("lê JSON dentro de bloco de código markdown", () => {
+    expect(extractJsonObject('Aqui está:\n```json\n{"a": {"b": [1, 2]}}\n```')).toEqual({ a: { b: [1, 2] } });
+  });
+
+  it("lê JSON com texto antes e depois", () => {
+    expect(extractJsonObject('Claro! {"summary":"ok","creature":{}} Espero que ajude.')).toEqual({ summary: "ok", creature: {} });
+  });
+
+  it("devolve null sem objeto JSON válido", () => {
+    expect(extractJsonObject("não sei")).toBeNull();
+    expect(extractJsonObject("[1, 2]")).toBeNull();
+    expect(extractJsonObject('{"a": ')).toBeNull();
   });
 });
