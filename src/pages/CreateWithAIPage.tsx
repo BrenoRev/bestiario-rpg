@@ -413,7 +413,7 @@ export function CreateWithAIPage() {
               <StatBlock creature={proposal.creature} />
               <Narrative creature={proposal.creature} showNotes={false} />
             </div>
-            <div className="lg:sticky lg:top-24 lg:self-start">
+            <div className="side-panel">
               <ImageStudio
                 key={proposal.key}
                 universeId={universeId}

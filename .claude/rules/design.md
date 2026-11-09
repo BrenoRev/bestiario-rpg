@@ -45,6 +45,6 @@ Identidade: bestiário antigo, mas limpo e legível. Papel envelhecido, pergamin
 
 - Ícones só do `lucide-react`: `size-4` em botões, `size-[1.1rem]` na navegação, `size-6` em estados vazios.
 - Mobile primeiro: grades `sm:grid-cols-2 lg:grid-cols-3`, nada de rolagem horizontal a 390 px. Largura máxima e margens já vêm do `AppLayout`.
-- Painel lateral em tela de detalhe/edição: `lg:grid-cols-[minmax(0,1fr)_21rem]` com `lg:sticky lg:top-24 lg:self-start`.
+- Painel lateral em tela de detalhe/edição: `lg:grid-cols-[minmax(0,1fr)_21rem]` com a classe `.side-panel` (fixo no desktop e com rolagem própria quando passa da altura da janela). Se a tela tiver barra fixa embaixo, ajuste `[--side-panel-offset:…]` (veja `CreatureEditorPage`). Não use `sticky` puro em painel que pode crescer.
 - Carregamento: `PageLoader` para a página, `.skeleton` para cartões, `loading` no botão que disparou a ação.
 - `IconButton` sempre com `label`; campos com rótulo (os primitivos ligam `label` e `id`); `role`/`aria-*` como nos componentes existentes (`radiogroup`, `switch`, `tablist`, `dialog`).

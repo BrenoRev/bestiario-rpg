@@ -114,7 +114,7 @@ export function CreatureDetailPage() {
           <StatBlock creature={draft} />
           <Narrative creature={draft} />
         </div>
-        <div className="lg:sticky lg:top-24 lg:self-start">
+        <div className="side-panel">
           <ImageStudio
             universeId={creature.universe_id}
             creatureId={creature.id}

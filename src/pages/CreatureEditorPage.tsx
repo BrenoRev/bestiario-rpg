@@ -156,7 +156,7 @@ export function CreatureEditorPage() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
         <CreatureForm value={draft} onChange={setDraft} />
 
-        <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+        <aside className="side-panel space-y-4 [--side-panel-offset:12rem]">
           {!editing && (
             <div className="card p-4">
               <Select label="Universo" value={universeId} onChange={(e) => setUniverseId(e.target.value)}>
