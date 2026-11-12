@@ -120,7 +120,7 @@ Interface, comentários e documentação em **português do Brasil**; identifica
 3. Imagens só são geradas com um clique explícito do usuário.
 4. Cada usuário só vê e altera os próprios dados: RLS em toda tabela, arquivos em `<user_id>/…`, chaves de API só nos secrets das Edge Functions.
 5. As fichas seguem D&D 5e.
-6. O visual é de bestiário antigo, com vida mas sem exagero: tokens de `src/index.css`, bordas finas, ornamentos finos e só os já previstos, movimento em CSS que respeita `prefers-reduced-motion`, sem sombra pesada (`.claude/rules/design.md`).
+6. O visual segue o **Códice Vivo**, aprovado pelo usuário: navegação escura, documentos em pergaminho, dourado nas ações e lilás pontual na IA. Referência em `DESIGN-SYSTEM.md`, regras de implementação em `.claude/rules/design.md` e tokens em `src/index.css`. Movimento em CSS respeita `prefers-reduced-motion`; sombras maiores ficam em overlays e retratos.
 
 ## Pronto quando
 

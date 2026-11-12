@@ -27,6 +27,7 @@ export function CreatureDetailPage() {
   const [variations, setVariations] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState<"delete" | "duplicate" | null>(null);
+  const [chapter, setChapter] = useState<"mechanics" | "story">("mechanics");
 
   useEffect(() => {
     if (creature) setCurrentId(creature.universe_id);
@@ -94,7 +95,7 @@ export function CreatureDetailPage() {
       </nav>
 
       <div className="mb-6 flex flex-wrap gap-2">
-        <Button variant="primary" icon={<Sparkles className="size-4" />} onClick={() => setAssist(true)}>
+        <Button variant="subtle" className="arcane-surface" icon={<Sparkles className="size-4" />} onClick={() => setAssist(true)}>
           Assistente de IA
         </Button>
         <Button icon={<GitBranch className="size-4" />} onClick={() => setVariations(true)}>
@@ -116,12 +117,42 @@ export function CreatureDetailPage() {
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="space-y-6">
-          <StatBlock creature={draft} transitionName="creature-name" />
-          <Narrative creature={draft} />
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="min-w-0 space-y-4">
+          <div role="tablist" aria-label="Capítulos da criatura" className="flex gap-1 rounded-xl border border-line bg-cream p-1">
+            {([
+              ["mechanics", "Ficha mecânica"], ["story", "Crônica & narrativa"],
+            ] as const).map(([key, label]) => (
+              <button
+                key={key}
+                id={`chapter-${key}`}
+                type="button"
+                role="tab"
+                aria-selected={chapter === key}
+                aria-controls={`panel-${key}`}
+                tabIndex={chapter === key ? 0 : -1}
+                onClick={() => setChapter(key)}
+                onKeyDown={(e) => {
+                  if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
+                  e.preventDefault();
+                  const next = e.key === "Home" ? "mechanics" : e.key === "End" ? "story" : key === "mechanics" ? "story" : "mechanics";
+                  setChapter(next);
+                  document.getElementById(`chapter-${next}`)?.focus();
+                }}
+                className={`min-h-11 min-w-0 flex-1 rounded-lg px-3 py-2 text-sm cursor-pointer ${chapter === key ? "bg-gold/10 text-gold" : "text-muted hover:text-ink"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div id="panel-mechanics" role="tabpanel" aria-labelledby="chapter-mechanics" hidden={chapter !== "mechanics"} tabIndex={0}>
+            <StatBlock creature={draft} transitionName="creature-name" />
+          </div>
+          <div id="panel-story" role="tabpanel" aria-labelledby="chapter-story" hidden={chapter !== "story"} tabIndex={0}>
+            <Narrative creature={draft} />
+          </div>
         </div>
-        <div className="side-panel order-first lg:order-none">
+        <div className="side-panel order-first mx-auto w-full max-w-md xl:order-none xl:max-w-none">
           <ImageStudio
             universeId={creature.universe_id}
             creatureId={creature.id}

@@ -245,7 +245,8 @@ export function CreateWithAIPage() {
   }
 
   const form = (
-    <section className="card p-5 sm:p-6">
+    <section className="card border-arcane-dim p-5 sm:p-6">
+      <div className="mb-5 flex items-center gap-2 text-xs font-medium text-arcane"><Sparkles className="size-4" /> Convide uma ideia. Escolha o que permanece.</div>
       <TextArea
         label="Descreva a criatura que você imagina"
         hint="Escreva com as suas palavras: aparência, onde vive, o que faz. Não precisa saber as regras do jogo."
@@ -334,10 +335,10 @@ export function CreateWithAIPage() {
   const waitNote = `A IA está concebendo ${settings.count > 1 ? `${settings.count} propostas` : "a proposta"}. Isso pode levar até um minuto.`;
 
   return (
-    <>
+    <div className="arcane-surface">
       <PageHeader
         eyebrow={`Universo: ${current.name}`}
-        title="Criar com IA"
+        title="Forja de criaturas"
         description="Descreva sua ideia. A IA propõe fichas de D&D 5e que você pode aceitar, descartar, combinar ou modificar. Nada entra no bestiário sem sua confirmação."
       />
 
@@ -370,14 +371,14 @@ export function CreateWithAIPage() {
       )}
 
       {waitingSheet && (
-        <div className="animate-fade-in mb-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
+        <div className="animate-fade-in mb-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
           <div className="relative">
             <StatBlockSkeleton />
             <div className="absolute inset-0 flex items-center justify-center rounded-[var(--radius-card)] bg-cream/70 px-4 backdrop-blur-[1px]">
               <ArcaneWait phrases={CREATING} note={waitNote} />
             </div>
           </div>
-          <div className="card hidden overflow-hidden lg:block" aria-hidden>
+          <div className="card hidden overflow-hidden xl:block" aria-hidden>
             <div className="skeleton aspect-square" />
           </div>
         </div>
@@ -469,7 +470,7 @@ export function CreateWithAIPage() {
             )}
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
             {/* key: ao trocar de proposta, a ficha nova entra com a revelação. */}
             <div key={proposal.key} className="space-y-6">
               <StatBlock creature={proposal.creature} />
@@ -522,7 +523,7 @@ export function CreateWithAIPage() {
           />
         </>
       )}
-    </>
+    </div>
   );
 }
 

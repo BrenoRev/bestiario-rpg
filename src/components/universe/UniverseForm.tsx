@@ -37,8 +37,8 @@ export function UniverseForm({ value, onChange, coverFile, onCoverFile }: Props)
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <div className="space-y-5">
-        <section className="card space-y-4 p-5 sm:p-6">
+      <div className="min-w-0 space-y-5">
+        <section className="card paper-surface space-y-4 p-5 sm:p-6">
           <h2 className="section-title">Identidade</h2>
           <TextInput label="Nome do universo" required maxLength={120} value={value.name} onChange={(e) => set("name", e.target.value)} placeholder="Ex.: Reinos de Cinzaprata" />
           <div>
@@ -52,7 +52,7 @@ export function UniverseForm({ value, onChange, coverFile, onCoverFile }: Props)
           <TextArea label="Descrição geral" value={value.description} onChange={(e) => set("description", e.target.value)} placeholder="Do que trata este mundo? Qual o tom da campanha?" />
         </section>
 
-        <section className="card space-y-4 p-5 sm:p-6">
+        <section className="card paper-surface space-y-4 p-5 sm:p-6">
           <h2 className="section-title">Ambientação</h2>
           <TextArea label="Ambientação" value={value.setting} onChange={(e) => set("setting", e.target.value)} placeholder="Geografia, culturas, conflitos, atmosfera…" />
           <TextInput label="Época ou período histórico" value={value.era} onChange={(e) => set("era", e.target.value)} placeholder="Ex.: Era das Cinzas, 300 anos após a Queda" />
@@ -87,7 +87,7 @@ export function UniverseForm({ value, onChange, coverFile, onCoverFile }: Props)
         <p className="text-xs text-muted">Essas informações servem de contexto para a IA ao criar e adaptar criaturas deste universo.</p>
       </div>
 
-      <aside className="space-y-3">
+      <aside className="min-w-0 space-y-3">
         <span className="label">Imagem de capa (opcional)</span>
         <div className="card overflow-hidden">
           <div className="aspect-[16/10] border-b border-line">

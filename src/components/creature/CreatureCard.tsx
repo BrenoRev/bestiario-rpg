@@ -1,4 +1,4 @@
-import { MapPin } from "lucide-react";
+import { ArrowUpRight, MapPin } from "lucide-react";
 import { Link, useViewTransitionState } from "react-router";
 import { usePrefetch } from "../../hooks/queries";
 import { habitatLabel, sizeLabel, threatLevel, typeLabel } from "../../lib/dnd";
@@ -23,14 +23,14 @@ export function CreatureCard({ creature }: { creature: CreatureSummary }) {
       onPointerEnter={warm}
       onFocus={warm}
       onTouchStart={warm}
-      className="card group flex flex-col overflow-hidden transition-all hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[var(--shadow-pop)]"
+      className="card collectible-card group flex min-w-0 flex-col overflow-hidden"
     >
       <div className="glint relative aspect-[4/3] overflow-hidden border-b border-line" style={{ viewTransitionName: flying ? "creature-image" : undefined }}>
-        <StoredImage path={creature.image_path} alt={creature.name} className="size-full transition-transform duration-500 group-hover:scale-[1.03]" />
+        <StoredImage path={creature.image_path} alt={creature.name} fallbackLabel="Criatura do códice" className="size-full transition-transform duration-500 group-hover:scale-[1.025]" />
         <span
           className={cx(
             "absolute right-2 top-2 rounded-md border px-2 py-0.5 text-xs font-bold tabular-nums shadow-sm",
-            strong ? "border-wine bg-wine text-cream" : "border-wine-line bg-cream/95 text-wine",
+            strong ? "border-danger/50 bg-night/95 text-danger" : "border-gold/40 bg-night/95 text-gold",
             threat.value === "mortal" && "animate-ember",
           )}
         >
@@ -40,7 +40,7 @@ export function CreatureCard({ creature }: { creature: CreatureSummary }) {
       <div className="flex flex-1 flex-col gap-2 p-4">
         <div>
           <h3
-            className="w-fit text-xl leading-tight font-semibold text-ink group-hover:text-wine"
+            className="w-fit text-[1.75rem] leading-tight font-medium text-ink group-hover:text-gold"
             style={{ viewTransitionName: flying ? "creature-name" : undefined }}
           >
             {creature.name}
@@ -59,6 +59,7 @@ export function CreatureCard({ creature }: { creature: CreatureSummary }) {
           ))}
           {creature.habitat_tags.length > 2 && <Badge>+{creature.habitat_tags.length - 2}</Badge>}
         </div>
+        <span className="mt-3 inline-flex items-center gap-1 border-t border-line pt-3 text-xs font-medium text-gold">Abrir ficha <ArrowUpRight className="size-3.5" /></span>
       </div>
     </Link>
   );

@@ -49,14 +49,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const icons = {
     success: <CheckCircle2 className="size-4 text-moss" />,
-    error: <AlertCircle className="size-4 text-wine" />,
+    error: <AlertCircle className="size-4 text-danger" />,
     info: <Info className="size-4 text-ink-soft" />,
   };
 
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <div aria-live="polite" className="pointer-events-none fixed bottom-4 right-4 left-4 z-[60] flex flex-col items-end gap-2 sm:left-auto">
+      <div aria-live="polite" className="toast-stack pointer-events-none fixed right-4 left-4 z-[60] flex flex-col items-end gap-2 sm:left-auto">
         {toasts.map((t) => (
           <div
             key={t.id}
@@ -64,12 +64,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             className={cx(
               t.leaving ? "animate-toast-out" : "animate-toast-in",
               "pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded-lg border bg-cream px-3.5 py-3 text-sm shadow-[var(--shadow-pop)]",
-              t.tone === "error" ? "border-wine-line" : "border-line",
+              t.tone === "error" ? "border-danger/40" : "border-line",
             )}
           >
             <span className="mt-0.5">{icons[t.tone]}</span>
             <span className="flex-1 text-ink">{t.message}</span>
-            <button className="text-muted hover:text-ink cursor-pointer" onClick={() => dismiss(t.id)} aria-label="Fechar aviso">
+            <button className="-my-2 -mr-2 flex size-10 shrink-0 items-center justify-center text-muted hover:text-ink cursor-pointer" onClick={() => dismiss(t.id)} aria-label="Fechar aviso">
               <X className="size-4" />
             </button>
           </div>

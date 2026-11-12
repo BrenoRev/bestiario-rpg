@@ -150,8 +150,9 @@ export function CreatureEditorPage() {
       <Button icon={<Sparkles className="size-4" />} onClick={() => setAssist(true)} disabled={!universeId} aria-label="Assistente de IA" title="Assistente de IA">
         <span className="hidden sm:inline">Assistente de IA</span>
       </Button>
-      <Button variant="primary" icon={<Save className="size-4" />} onClick={save} loading={saving}>
-        {editing ? "Salvar ficha" : "Salvar no bestiário"}
+      <Button variant="primary" icon={<Save className="size-4" />} onClick={save} loading={saving} aria-label={editing ? "Salvar ficha" : "Salvar no bestiário"}>
+        <span className="sm:hidden">Salvar ficha</span>
+        <span className="hidden sm:inline">{editing ? "Salvar ficha" : "Salvar no bestiário"}</span>
       </Button>
     </>
   );
@@ -167,10 +168,10 @@ export function CreatureEditorPage() {
         actions={actions}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
         <div className="min-w-0 space-y-5">
           {/* No celular a escolha do universo vem antes da ficha (no desktop fica no painel lateral). */}
-          {!editing && universeSelect("card p-4 lg:hidden")}
+          {!editing && universeSelect("card p-4 xl:hidden")}
           {!editing && !incoming.draft && showHelp && (
             <div className="flex gap-3 rounded-[var(--radius-card)] border border-wine-line bg-wine-soft/60 px-4 py-3.5 text-sm leading-relaxed text-ink-soft">
               <Lightbulb className="mt-0.5 size-5 shrink-0 text-wine" />
@@ -185,7 +186,7 @@ export function CreatureEditorPage() {
         </div>
 
         <aside className="side-panel space-y-4 [--side-panel-offset:12rem]">
-          {!editing && universeSelect("card hidden p-4 lg:block")}
+          {!editing && universeSelect("card hidden p-4 xl:block")}
           {universeId && (
             <ImageStudio
               universeId={universeId}
@@ -201,7 +202,8 @@ export function CreatureEditorPage() {
         </aside>
       </div>
 
-      <div className="sticky bottom-0 z-10 -mx-4 mt-8 flex justify-end gap-2 border-t border-line bg-paper/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <div className="editor-actions sticky z-10 -mx-4 mt-8 flex items-center justify-end gap-2 border-t border-line bg-paper/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+        {dirty && <span className="mr-auto hidden text-xs text-amber md:block">Alterações não salvas</span>}
         <Button onClick={() => navigate(-1)} disabled={saving}>
           Cancelar
         </Button>

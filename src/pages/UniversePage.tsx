@@ -56,13 +56,13 @@ export function UniversePage() {
       <section className="card mb-8 overflow-hidden">
         <div className="grid md:grid-cols-[minmax(0,22rem)_1fr]">
           <StoredImage path={universe.cover_path} alt={`Capa de ${universe.name}`} className="aspect-[16/10] size-full border-b border-line [view-transition-name:universe-cover] md:aspect-auto md:min-h-64 md:border-b-0 md:border-r" fallbackLabel="Sem capa" />
-          <div className="flex flex-col p-6 sm:p-7">
+          <div className="flex min-w-0 flex-col p-6 sm:p-7">
             <div className="flex flex-wrap items-center gap-2">
               {universe.genre && <Badge tone="wine">{universe.genre}</Badge>}
               <Badge>{FANTASY_LABEL[universe.fantasy_level]}</Badge>
               {count != null && <Badge tone="moss">{count} {count === 1 ? "criatura" : "criaturas"}</Badge>}
             </div>
-            <h1 className="mt-3 text-[2.4rem] leading-tight font-semibold">{universe.name}</h1>
+            <h1 className="page-title mt-4">{universe.name}</h1>
             {universe.description && <p className="mt-2 max-w-3xl text-[0.95rem] leading-relaxed text-ink-soft">{universe.description}</p>}
             {details.length > 0 && (
               <dl className="mt-5 grid gap-4 lg:grid-cols-3">
@@ -94,7 +94,7 @@ export function UniversePage() {
 
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <h2 className="text-3xl font-semibold">Bestiário</h2>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link to={`/criaturas/nova?universo=${universe.id}`}>
             <Button icon={<Plus className="size-4" />}>Nova criatura</Button>
           </Link>

@@ -6,7 +6,7 @@ paths:
 
 # Design e componentes de interface
 
-Identidade: bestiário antigo, legível e com vida. Papel envelhecido (grão fino e vinheta leve no fundo), pergaminho, destaque em vinho, texto marrom-escuro, bordas finas, cantos levemente arredondados. Ornamento só os já existentes, todos finos: cantoneiras da ficha (`.ornate`), capitular da Crônica (`.drop-cap`), selo de cera (`WaxSeal`). Sem textura forte nem sombra pesada.
+Identidade: **Códice Vivo**, conforme `DESIGN-SYSTEM.md`, fornecido e aprovado pelo usuário. Casca de navegação em carvão/ameixa, documentos em pergaminho, dourado fosco nas ações e lilás pontual nos recursos de IA. A referência descreve um protótipo; nesta aplicação, autenticação, banco e IA continuam usando as integrações reais existentes. Não introduza simulações. A imagem fornecida está em `public/login-campaign.png`, no login e na abertura de Meus Mundos.
 
 ## Use os primitivos existentes
 
@@ -24,11 +24,12 @@ Identidade: bestiário antigo, legível e com vida. Papel envelhecido (grão fin
 
 ## Tokens (`src/index.css`)
 
-- **Cores, só por token**: `paper` (fundo), `parchment` e `cream` (superfícies), `sand`, `line` e `line-strong` (bordas), `ink`, `ink-soft` e `muted` (texto), `wine`, `wine-dark`, `wine-soft`, `wine-line` e `wine-tint` (destaque), `moss`, `moss-soft` e `moss-line` (positivo, ambientes), `amber`, `amber-soft` e `amber-line` (atenção). Ex.: `bg-cream`, `text-wine`, `border-line`, `bg-ink/40`.
+- **Cores, só por token**: `night`, `night-raised`, `night-soft`, `silver`, `gold`, `arcane`, `danger` e os tokens de papel `page`, `page-light`, `page-ink`, `rubric`. Os aliases anteriores (`paper`, `cream`, `ink`, `wine`, `moss` etc.) são contextuais: escuros por padrão e claros dentro de `.paper-surface`. Nunca use `bg-ink` para escurecer um overlay: use `bg-overlay/75`.
+- `.paper-surface` nos formulários de universo, seções do editor, ficha mecânica, narrativa e verbetes. Cartões de mundos/criaturas, preferências, menus e modais são escuros. `.arcane-surface` reserva o lilás à IA; documentos internos continuam em pergaminho. Ação principal: `gold` com texto `night`; ação destrutiva: `danger`.
 - Cor nova só com aprovação, e entra como token em `@theme`. Nenhuma cor fica fora dos tokens.
 - Classes prontas: `.card`, `.field`, `.label`, `.hint`, `.section-title`, `.stat-rule`, `.stat-heading`, `.skeleton`, `.ornate`, `.drop-cap`, `.glint`, e as de movimento (seção abaixo).
 - Sombras: `shadow-[var(--shadow-soft)]` (repouso) e `shadow-[var(--shadow-pop)]` (menus, modais, hover de cartão).
-- Cantos: `rounded-lg` em controles; `.card` ou `rounded-[var(--radius-card)]` em cartões.
+- Cantos: `--radius-ui` (12 px) em controles, `--radius-card` (18 px) em cartões e `--radius-paper` (6 px) em documentos. `.card.paper-surface` aplica os cantos e o material de papel.
 
 ## Movimento
 
@@ -43,14 +44,14 @@ Identidade: bestiário antigo, legível e com vida. Papel envelhecido (grão fin
 
 ## Tipografia
 
-- Títulos (`h1`–`h4` ou `font-display`): Cormorant Garamond, serifada. Textos, formulários e dados: Inter (`font-sans`, padrão).
+- Títulos (`h1`–`h4` ou `font-display`): EB Garamond, com Georgia como fallback. Textos, formulários e dados: Inter/Segoe UI (`font-sans`, padrão). `.page-title` para aberturas e `.narrative-copy` para a prosa.
 - Números em campos, tabelas e atributos: sans com `tabular-nums`. A serifa tem algarismos antigos e confunde "14" com "ı4".
 - Rótulo de seção pequeno: `text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-muted`.
 
 ## Ficha da criatura
 
-- Parte **mecânica** em `.card` (creme), com `stat-rule` entre blocos e `stat-heading` para Ações, Reações etc.
-- Parte **narrativa** ("Crônica") em `bg-parchment`. Mantenha essa separação em qualquer tela nova da ficha.
+- Parte **mecânica** em `.card.paper-surface`, com `stat-rule` entre blocos e `stat-heading` para Ações, Reações etc.
+- Parte **narrativa** em `.paper-surface` com `.narrative-copy`. Na página de detalhe, as abas separam mecânica e crônica; propostas de IA podem exibir as duas em sequência.
 
 ## Ajuda para quem não conhece RPG
 
@@ -62,15 +63,16 @@ Identidade: bestiário antigo, legível e com vida. Papel envelhecido (grão fin
 ## Celular
 
 - Teste toda tela a **360 px** de largura: sem rolagem horizontal e sem elemento vazando.
-- Alvos de toque com pelo menos 36 px (`min-h-9`/`size-9`); `IconButton` não encolhe (`shrink-0`). Campos de texto livre ao lado de botões levam `min-w-0`.
+- Alvos de toque com pelo menos 42 px; `.button` e `.icon-button` garantem o mínimo. `IconButton` não encolhe (`shrink-0`). Campos de texto livre ao lado de botões levam `min-w-0`.
+- Abaixo de 1024 px, a navegação principal é inferior, com quatro rótulos. Barras de edição usam `.editor-actions` e avisos usam `.toast-stack` para respeitar a navegação e a área segura do dispositivo. O seletor de universo permanece no topo.
 - Filhos de grade e flex que contêm texto ou controles largos levam `min-w-0` (sem isso o conteúdo força a largura da página).
 - Barras fixas com vários botões precisam caber a 360 px: ícone sem texto no celular (`<span className="hidden sm:inline">`) com `aria-label`.
-- O que importa primeiro no celular vem primeiro no DOM ou com `order-first lg:order-none` (ex.: ilustração na ficha, universo ao criar criatura).
+- O que importa primeiro no celular vem primeiro no DOM ou com `order-first xl:order-none` (ex.: ilustração na ficha, universo ao criar criatura).
 
 ## Ícones, layout e acessibilidade
 
 - Ícones só do `lucide-react`: `size-4` em botões, `size-[1.1rem]` na navegação, `size-6` em estados vazios. Exceção: as marcas desenhadas de `brand.tsx` (`Logo`, `D20`, `WaxSeal`).
 - Mobile primeiro: grades `sm:grid-cols-2 lg:grid-cols-3`, nada de rolagem horizontal a 390 px. Largura máxima e margens já vêm do `AppLayout`.
-- Painel lateral em tela de detalhe/edição: `lg:grid-cols-[minmax(0,1fr)_21rem]` com a classe `.side-panel` (fixo no desktop e com rolagem própria quando passa da altura da janela). Se a tela tiver barra fixa embaixo, ajuste `[--side-panel-offset:…]` (veja `CreatureEditorPage`). Não use `sticky` puro em painel que pode crescer.
+- Painel lateral em tela de detalhe/edição: `xl:grid-cols-[minmax(0,1fr)_21rem]` com a classe `.side-panel` (fixo a partir de 1280 px e com rolagem própria quando passa da altura da janela). Antes disso, preserve a largura do formulário com uma coluna. Se a tela tiver barra fixa embaixo, ajuste `[--side-panel-offset:…]` (veja `CreatureEditorPage`). Não use `sticky` puro em painel que pode crescer.
 - Carregamento: `PageLoader` para a página, `.skeleton` para cartões, `loading` no botão que disparou a ação.
 - `IconButton` sempre com `label`; campos com rótulo (os primitivos ligam `label` e `id`); `role`/`aria-*` como nos componentes existentes (`radiogroup`, `switch`, `tablist`, `dialog`).

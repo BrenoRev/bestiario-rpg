@@ -34,7 +34,7 @@ export function DiffReview({
     onToggle(key);
   };
   return (
-    <div className="space-y-4">
+    <div className="arcane-surface space-y-4">
       {summary && (
         <div className="flex gap-3 rounded-lg border border-wine-line bg-wine-soft/60 px-4 py-3 text-sm text-ink">
           <Sparkles className="mt-0.5 size-4 shrink-0 text-wine" />
@@ -66,7 +66,7 @@ export function DiffReview({
                     <input type="checkbox" className="accent-wine size-4" checked={on} onChange={() => toggle(key)} />
                     <span className="font-display text-lg font-semibold text-ink">{FIELD_LABELS[key] ?? key}</span>
                   </label>
-                  <div className="grid gap-3 px-4 py-3 md:grid-cols-2">
+                  <div className="paper-surface grid gap-3 px-4 py-3 md:grid-cols-2">
                     <div>
                       <div className="mb-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted">Atual</div>
                       <p className="whitespace-pre-line text-[0.85rem] leading-relaxed text-ink-soft line-through decoration-wine/30">{formatField(key, current[key])}</p>

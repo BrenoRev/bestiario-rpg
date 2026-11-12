@@ -168,7 +168,7 @@ export function ImageStudio({
         )}
 
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="subtle" icon={<Sparkles className="size-4" />} onClick={() => generate(false)} disabled={generating || busy}>
+          <Button variant="subtle" className="arcane-surface" icon={<Sparkles className="size-4" />} onClick={() => generate(false)} disabled={generating || busy}>
             {versions.length ? "Nova versão" : "Gerar imagem"}
           </Button>
           <Button icon={<Wand2 className="size-4" />} onClick={() => setShowInstructions((s) => !s)} disabled={generating || busy}>
@@ -238,7 +238,7 @@ export function ImageStudio({
                     <IconButton
                       label="Excluir versão"
                       onClick={() => setToDelete(v)}
-                      className="absolute right-0.5 top-0.5 size-6 bg-cream/90 opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-wine"
+                      className="absolute right-0.5 top-0.5 bg-cream/90 hover:text-danger"
                     >
                       <Trash2 className="size-3.5" />
                     </IconButton>
