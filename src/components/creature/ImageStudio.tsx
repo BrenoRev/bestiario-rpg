@@ -1,7 +1,7 @@
 // Ilustração da criatura: gerar por IA (só quando o usuário pede), pedir
 // alterações por texto, comparar versões, aceitar, substituir, remover ou enviar.
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, ImagePlus, Images, Sparkles, Trash2, Upload, Wand2, X } from "lucide-react";
+import { Check, ImagePlus, Images, Maximize2, Sparkles, Trash2, Upload, Wand2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { keys, useCreatureImages } from "../../hooks/queries";
 import { generateCreatureImage } from "../../lib/ai";
@@ -11,6 +11,7 @@ import { StoredImage } from "../brand";
 import { ConfirmDialog } from "../Modal";
 import { errorMessage, useToast } from "../Toast";
 import { ArcaneWait, Badge, Button, cx, IconButton } from "../ui";
+import { ImageViewer } from "./ImageViewer";
 
 interface ImageStudioProps {
   universeId: string;
@@ -53,6 +54,7 @@ export function ImageStudio({
   const [busy, setBusy] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [toDelete, setToDelete] = useState<CreatureImage | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   // A imagem com que a tela abriu não se revela: ela pode estar chegando pela transição de página.
   const openingPath = useRef(currentPath).current;
@@ -148,14 +150,27 @@ export function ImageStudio({
           className={cx("size-full", previewPath !== openingPath && "animate-ink")}
           fallbackLabel="Sem ilustração"
         />
+        {previewPath && !generating && !busy && (
+          <Button
+            variant="ghost"
+            className="image-preview-trigger"
+            aria-label={`Ampliar ilustração de ${creature.name || "criatura sem nome"}`}
+            aria-haspopup="dialog"
+            onClick={() => setViewerOpen(true)}
+          >
+            <span className="absolute bottom-3 right-3 flex size-11 items-center justify-center rounded-xl border border-gold/35 bg-night/85 text-gold" aria-hidden="true">
+              <Maximize2 className="size-5" />
+            </span>
+          </Button>
+        )}
         {generating && (
           <div className="animate-fade-in absolute inset-0 flex items-center justify-center bg-parchment/85 px-6 backdrop-blur-[2px]">
             <ArcaneWait phrases={ILLUSTRATING} note="A geração costuma levar de 30 segundos a 1 minuto." />
           </div>
         )}
         {previewPath && !generating && (
-          <div className="absolute left-3 top-3">
-            {previewIsCurrent ? <Badge tone="wine">Imagem da ficha</Badge> : <Badge tone="amber">Pré-visualização</Badge>}
+          <div className="pointer-events-none absolute left-3 top-3">
+            <Badge tone="gold">{previewIsCurrent ? "Imagem da ficha" : "Pré-visualização"}</Badge>
           </div>
         )}
       </div>
@@ -257,6 +272,7 @@ export function ImageStudio({
         )}
       </div>
 
+      <ImageViewer key={previewPath ?? "vazio"} open={viewerOpen} onClose={() => setViewerOpen(false)} path={previewPath} name={creature.name} />
       <ConfirmDialog
         open={confirmRemove}
         title="Remover imagem da ficha?"

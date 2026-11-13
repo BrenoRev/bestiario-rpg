@@ -12,13 +12,16 @@ interface ModalProps {
   children: ReactNode;
   footer?: ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
+  /** Centraliza também no celular; por padrão, abre como folha na base da tela. */
+  centered?: boolean;
+  className?: string;
   /** Impede fechar por Esc/clique fora enquanto uma ação está em andamento. */
   busy?: boolean;
 }
 
 const SIZES = { sm: "max-w-md", md: "max-w-xl", lg: "max-w-3xl", xl: "max-w-5xl" };
 
-export function Modal({ open, onClose, title, description, children, footer, size = "md", busy }: ModalProps) {
+export function Modal({ open, onClose, title, description, children, footer, size = "md", centered, className, busy }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const descriptionId = useId();
@@ -66,7 +69,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
   if (!mounted) return null;
 
   return createPortal(
-    <div className={cx("fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6", closing && "pointer-events-none")}>
+    <div className={cx("fixed inset-0 z-50 flex justify-center", centered ? "items-center p-3 sm:p-6" : "items-end sm:items-center sm:p-6", closing && "pointer-events-none")}>
       <div
         className={cx("absolute inset-0 bg-overlay/75 backdrop-blur-sm", closing ? "animate-fade-out" : "animate-fade-in")}
         onClick={() => !busy && onClose()}
@@ -81,11 +84,13 @@ export function Modal({ open, onClose, title, description, children, footer, siz
         tabIndex={-1}
         className={cx(
           closing ? "animate-modal-out" : "animate-modal-in",
-          "relative flex max-h-[92dvh] w-full min-w-0 flex-col rounded-t-2xl border border-gold/25 bg-cream shadow-[var(--shadow-pop)] outline-none sm:rounded-2xl",
+          "relative flex max-h-[92dvh] w-full min-w-0 flex-col border border-gold/25 bg-cream shadow-[var(--shadow-pop)] outline-none",
+          centered ? "rounded-2xl" : "rounded-t-2xl sm:rounded-2xl",
           SIZES[size],
+          className,
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
+        <div className="modal-header flex items-start justify-between gap-4 border-b border-line px-5 py-4">
           <div className="min-w-0">
             <h2 id={titleId} className="text-3xl font-medium leading-tight">{title}</h2>
             {description && <p id={descriptionId} className="mt-2 text-sm text-muted">{description}</p>}
@@ -94,8 +99,8 @@ export function Modal({ open, onClose, title, description, children, footer, siz
             <X className="size-5" />
           </IconButton>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div>
-        {footer && <div className="flex flex-wrap justify-end gap-2 border-t border-line bg-parchment/60 px-5 py-3 rounded-b-xl">{footer}</div>}
+        <div className="modal-content min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div>
+        {footer && <div className="modal-footer flex flex-wrap justify-end gap-2 border-t border-line bg-parchment/60 px-5 py-3 rounded-b-xl">{footer}</div>}
       </div>
     </div>,
     document.body,

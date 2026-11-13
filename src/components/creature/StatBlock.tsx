@@ -39,7 +39,7 @@ export function StatBlock({ creature, compact, transitionName }: { creature: Cre
   const hasLegendary = c.legendary_actions.length > 0;
 
   return (
-    <article className={cx("paper-surface sheet-reveal min-w-0", !compact && "card ornate px-5 py-5 sm:px-7 sm:py-7")} aria-label="Ficha de estatísticas">
+    <article className={cx("paper-surface creature-sheet sheet-reveal min-w-0", !compact && "card ornate px-5 py-5 sm:px-7 sm:py-7")} aria-label="Ficha de estatísticas">
       <header>
         <p className="mb-3 font-sans text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-muted">Registro do bestiário</p>
         <h2 className="w-fit text-[2.5rem] leading-none font-semibold text-wine" style={{ viewTransitionName: transitionName }}>
@@ -147,7 +147,7 @@ const NARRATIVE: { key: keyof CreatureDraft; label: string }[] = [
 export function Narrative({ creature, showNotes = true }: { creature: CreatureDraft; showNotes?: boolean }) {
   const filled = NARRATIVE.filter((n) => String(creature[n.key] ?? "").trim());
   return (
-    <section className="paper-surface min-w-0 border border-line px-5 py-6 sm:px-7" aria-label="Descrição narrativa">
+    <section className="paper-surface creature-sheet min-w-0 border border-line px-5 py-6 sm:px-7" aria-label="Descrição narrativa">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="section-title">Crônica &amp; narrativa</h2>
         {creature.habitat_tags.length > 0 && (
@@ -185,7 +185,7 @@ export function Narrative({ creature, showNotes = true }: { creature: CreatureDr
 /** Ficha em branco enquanto a IA escreve (mesmo formato do `StatBlock`). */
 export function StatBlockSkeleton() {
   return (
-    <div className="card paper-surface ornate px-5 py-5 sm:px-7 sm:py-6" aria-hidden>
+    <div className="card paper-surface creature-sheet ornate px-5 py-5 sm:px-7 sm:py-6" aria-hidden>
       <div className="skeleton h-8 w-1/2 rounded" />
       <div className="skeleton mt-2 h-3 w-1/3 rounded" />
       <hr className="stat-rule opacity-40" />

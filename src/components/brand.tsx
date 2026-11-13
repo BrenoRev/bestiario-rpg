@@ -1,3 +1,4 @@
+import type { ImgHTMLAttributes } from "react";
 import { useSignedUrl } from "../hooks/queries";
 import { cx } from "./ui";
 
@@ -64,12 +65,16 @@ export function StoredImage({
   alt,
   className,
   fallbackLabel,
+  fit = "cover",
+  loading = "lazy",
+  ...imageProps
 }: {
   path: string | null | undefined;
   alt: string;
   className?: string;
   fallbackLabel?: string;
-}) {
+  fit?: "cover" | "contain";
+} & Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "srcSet" | "alt" | "className">) {
   const { data: url, isLoading, isError } = useSignedUrl(path);
   if (path && isLoading) return <div className={cx("skeleton", className)} />;
   if (!path || isError || !url) {
@@ -87,7 +92,7 @@ export function StoredImage({
       </div>
     );
   }
-  return <img src={url} alt={alt} className={cx("object-cover", className)} loading="lazy" />;
+  return <img {...imageProps} src={url} alt={alt} className={cx(fit === "contain" ? "object-contain" : "object-cover", className)} loading={loading} />;
 }
 
 export function Avatar({ url, name, className }: { url?: string | null; name?: string | null; className?: string }) {

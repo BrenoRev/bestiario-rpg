@@ -381,12 +381,13 @@ export function PageLoader({ label = "Carregando…" }: { label?: string }) {
   );
 }
 
-export function Badge({ children, tone = "neutral", className }: { children: ReactNode; tone?: "neutral" | "wine" | "moss" | "amber"; className?: string }) {
+export function Badge({ children, tone = "neutral", className }: { children: ReactNode; tone?: "neutral" | "wine" | "moss" | "amber" | "gold"; className?: string }) {
   const tones = {
     neutral: "bg-sand/80 text-ink-soft border-line",
     wine: "bg-wine-soft text-wine border-wine-line",
     moss: "bg-moss-soft text-moss border-moss-line",
     amber: "bg-amber-soft text-amber border-amber-line",
+    gold: "bg-gold text-night border-gold",
   };
   return (
     <span className={cx("inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium", tones[tone], className)}>
