@@ -68,7 +68,7 @@ function GlobalSearch() {
   };
 
   return (
-    <div ref={ref} className="relative w-full max-w-md">
+    <div ref={ref} className="relative w-full min-w-0 max-w-md">
       <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
       <input
         type="search"
@@ -131,6 +131,20 @@ function Dropdown({ trigger, children, align = "right" }: { trigger: (open: bool
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useClickOutside(ref, () => setOpen(false));
+  const close = () => {
+    setOpen(false);
+    ref.current?.querySelector("button")?.focus();
+  };
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      ref.current?.querySelector("button")?.focus();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
   return (
     <div ref={ref} className="relative">
       <div onClick={() => setOpen((o) => !o)}>{trigger(open)}</div>
@@ -141,14 +155,14 @@ function Dropdown({ trigger, children, align = "right" }: { trigger: (open: bool
             align === "right" ? "right-0" : "left-0",
           )}
         >
-          {children(() => setOpen(false))}
+          {children(close)}
         </div>
       )}
     </div>
   );
 }
 
-const menuItem = "flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-ink-soft hover:bg-sand/60 hover:text-ink cursor-pointer";
+const menuItem = "flex min-h-11 w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-ink-soft hover:bg-sand/60 hover:text-ink cursor-pointer";
 
 export function UniverseSwitcher() {
   const { universes, current, setCurrentId } = useCurrentUniverse();
@@ -161,7 +175,7 @@ export function UniverseSwitcher() {
         <button
           type="button"
           aria-expanded={open}
-          className="flex h-10 max-w-56 items-center gap-2 rounded-lg border border-line bg-cream px-3 text-sm hover:border-line-strong cursor-pointer"
+          className="flex min-h-11 max-w-56 items-center gap-2 rounded-xl border border-line bg-cream px-3 text-sm hover:border-gold/40 cursor-pointer"
         >
           <Globe2 className="size-4 shrink-0 text-wine" />
           <span className="truncate font-medium">{current.name}</span>
@@ -216,7 +230,7 @@ function HelpMenu() {
           aria-label="Ajuda"
           title="Ajuda"
           aria-expanded={open}
-          className="inline-flex size-10 shrink-0 items-center justify-center rounded-full text-ink-soft hover:bg-sand/70 hover:text-wine cursor-pointer"
+          className="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink-soft hover:bg-sand/70 hover:text-gold cursor-pointer"
         >
           <HelpCircle className="size-5" />
         </button>
@@ -259,7 +273,7 @@ function ProfileMenu() {
   return (
     <Dropdown
       trigger={(open) => (
-        <button type="button" aria-label="Perfil" aria-expanded={open} className="rounded-full cursor-pointer">
+        <button type="button" aria-label="Perfil" aria-expanded={open} className="flex size-11 shrink-0 items-center justify-center rounded-full cursor-pointer">
           <Avatar url={avatar} name={name} className="size-9" />
         </button>
       )}
@@ -282,20 +296,22 @@ function ProfileMenu() {
   );
 }
 
-export function Topbar({ menuButton }: { menuButton: ReactNode }) {
+export function Topbar({ mobileBrand }: { mobileBrand: ReactNode }) {
+  const { current } = useCurrentUniverse();
   return (
-    <header className="sticky top-0 z-20 border-b border-line bg-paper/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-3 px-4 sm:px-6 lg:px-8">
-        {menuButton}
+    <header className="sticky top-0 z-20 border-b border-line bg-night/90 backdrop-blur-lg">
+      <div className="mx-auto flex min-h-20 max-w-[1440px] items-center gap-2 px-4 sm:gap-3 sm:px-6 lg:px-10">
+        {mobileBrand}
         <div className="hidden md:block">
           <UniverseSwitcher />
         </div>
-        <div className="flex flex-1 justify-end md:justify-center">
+        <div className="flex min-w-0 flex-1 justify-end md:justify-center">
           <GlobalSearch />
         </div>
         <HelpMenu />
         <ProfileMenu />
       </div>
+      {current && <div className="px-4 pb-3 md:hidden"><UniverseSwitcher /></div>}
     </header>
   );
 }

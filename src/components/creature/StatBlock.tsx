@@ -39,9 +39,10 @@ export function StatBlock({ creature, compact, transitionName }: { creature: Cre
   const hasLegendary = c.legendary_actions.length > 0;
 
   return (
-    <article className={cx("sheet-reveal", !compact && "card ornate px-5 py-5 sm:px-7 sm:py-6")} aria-label="Ficha de estatísticas">
+    <article className={cx("paper-surface sheet-reveal min-w-0", !compact && "card ornate px-5 py-5 sm:px-7 sm:py-7")} aria-label="Ficha de estatísticas">
       <header>
-        <h2 className="w-fit text-[2rem] leading-none font-bold text-wine" style={{ viewTransitionName: transitionName }}>
+        <p className="mb-3 font-sans text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-muted">Registro do bestiário</p>
+        <h2 className="w-fit text-[2.5rem] leading-none font-semibold text-wine" style={{ viewTransitionName: transitionName }}>
           {c.name || "Criatura sem nome"}
         </h2>
         <p className="mt-1.5 text-sm italic text-ink-soft first-letter:uppercase">{creatureSubtitle(c)}</p>
@@ -61,15 +62,14 @@ export function StatBlock({ creature, compact, transitionName }: { creature: Cre
       </div>
 
       <hr className="stat-rule" />
-      <div className="grid grid-cols-3 gap-y-2 text-center sm:grid-cols-6">
+      <div className="grid grid-cols-3 gap-2 text-center sm:grid-cols-6">
         {ABILITIES.map((a) => (
-          <div key={a.value}>
+          <div key={a.value} className="rounded-md border border-wine-line bg-cream/60 px-1 py-3">
             <div className="text-xs font-bold tracking-wider text-wine" title={a.label}>
               {a.short}
             </div>
-            <div className="text-[0.9rem] tabular-nums">
-              {c.abilities[a.value]} ({signed(abilityMod(c.abilities[a.value]))})
-            </div>
+            <div className="mt-1 font-display text-3xl leading-none tabular-nums">{c.abilities[a.value]}</div>
+            <div className="mt-1 text-xs text-muted tabular-nums">({signed(abilityMod(c.abilities[a.value]))})</div>
           </div>
         ))}
       </div>
@@ -147,9 +147,9 @@ const NARRATIVE: { key: keyof CreatureDraft; label: string }[] = [
 export function Narrative({ creature, showNotes = true }: { creature: CreatureDraft; showNotes?: boolean }) {
   const filled = NARRATIVE.filter((n) => String(creature[n.key] ?? "").trim());
   return (
-    <section className="rounded-[var(--radius-card)] border border-line bg-parchment px-5 py-5 sm:px-7" aria-label="Descrição narrativa">
+    <section className="paper-surface min-w-0 border border-line px-5 py-6 sm:px-7" aria-label="Descrição narrativa">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="section-title">Crônica</h2>
+        <h2 className="section-title">Crônica &amp; narrativa</h2>
         {creature.habitat_tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {creature.habitat_tags.map((h) => (
@@ -166,8 +166,8 @@ export function Narrative({ creature, showNotes = true }: { creature: CreatureDr
         <div className="stagger mt-3 space-y-4">
           {filled.map((n, i) => (
             <div key={n.key}>
-              <h3 className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-muted">{n.label}</h3>
-              <p className={cx("mt-1 text-[0.92rem] leading-relaxed whitespace-pre-line text-ink", i === 0 && "drop-cap")}>{String(creature[n.key])}</p>
+              <h3 className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-muted">{n.label}</h3>
+              <p className={cx("narrative-copy mt-2 whitespace-pre-line text-ink", i === 0 && "drop-cap")}>{String(creature[n.key])}</p>
             </div>
           ))}
         </div>
@@ -185,7 +185,7 @@ export function Narrative({ creature, showNotes = true }: { creature: CreatureDr
 /** Ficha em branco enquanto a IA escreve (mesmo formato do `StatBlock`). */
 export function StatBlockSkeleton() {
   return (
-    <div className="card ornate px-5 py-5 sm:px-7 sm:py-6" aria-hidden>
+    <div className="card paper-surface ornate px-5 py-5 sm:px-7 sm:py-6" aria-hidden>
       <div className="skeleton h-8 w-1/2 rounded" />
       <div className="skeleton mt-2 h-3 w-1/3 rounded" />
       <hr className="stat-rule opacity-40" />

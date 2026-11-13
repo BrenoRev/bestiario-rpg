@@ -73,7 +73,7 @@ export function HelpTip({ term, className }: { term: GlossaryKey; className?: st
         }}
         aria-label={`O que é ${entry.term}?`}
         aria-expanded={!!pos}
-        className={`-m-1.5 inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full p-1.5 text-muted transition-colors hover:text-wine ${className ?? ""}`}
+        className={`help-tip -my-2 -mx-1.5 inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full p-1.5 text-muted transition-colors hover:text-wine ${className ?? ""}`}
       >
         <HelpCircle className="size-3.5" />
       </button>

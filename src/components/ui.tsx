@@ -11,11 +11,11 @@ export { cx };
 // ------------------------------------------------------------------ Botões
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "subtle";
 const VARIANTS: Record<Variant, string> = {
-  primary: "bg-wine text-cream hover:bg-wine-dark border border-wine shadow-[var(--shadow-soft)]",
+  primary: "bg-gold text-night hover:bg-gold-bright border border-gold shadow-[var(--shadow-soft)]",
   secondary: "bg-cream text-ink border border-line hover:border-line-strong hover:bg-parchment",
   ghost: "text-ink-soft hover:bg-sand/70 border border-transparent",
   subtle: "bg-wine-soft text-wine border border-wine-line/70 hover:bg-wine-tint",
-  danger: "bg-cream text-wine border border-wine-line hover:bg-wine-soft",
+  danger: "bg-transparent text-danger border border-danger/40 hover:bg-danger/10",
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -35,11 +35,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     <button
       ref={ref}
       type={type}
+      data-variant={variant}
       disabled={disabled || loading}
       className={cx(
-        "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors whitespace-nowrap",
+        "button inline-flex items-center justify-center gap-2 font-medium whitespace-nowrap",
         "disabled:opacity-55 disabled:cursor-not-allowed cursor-pointer",
-        size === "sm" ? "h-8 px-3 text-[0.8rem]" : "h-10 px-4 text-sm",
+        size === "sm" ? "px-3 text-[0.8rem]" : "px-4 py-2.5 text-sm",
         VARIANTS[variant],
         className,
       )}
@@ -64,7 +65,7 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={cx(
-        "inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-ink-soft hover:bg-sand/70 hover:text-ink transition-colors cursor-pointer disabled:opacity-50",
+        "icon-button inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-ink-soft hover:bg-sand/70 hover:text-ink transition-colors cursor-pointer disabled:opacity-50",
         className,
       )}
       {...rest}
@@ -106,7 +107,7 @@ export function FieldLabel({ htmlFor, label, help }: { htmlFor?: string; label: 
 export function FieldShell({ label, hint, help, className, children }: FieldShellProps) {
   const id = useId();
   return (
-    <div className={className}>
+    <div className={cx("min-w-0", className)}>
       {label && <FieldLabel htmlFor={id} label={label} help={help} />}
       {children(id)}
       {hint && <p className="hint">{hint}</p>}
@@ -116,10 +117,15 @@ export function FieldShell({ label, hint, help, className, children }: FieldShel
 
 type WithLabel = { label?: string; hint?: ReactNode; help?: GlossaryKey; wrapperClassName?: string };
 
-export function TextInput({ label, hint, help, wrapperClassName, className, ...rest }: InputHTMLAttributes<HTMLInputElement> & WithLabel) {
+export function TextInput({ label, hint, help, icon, wrapperClassName, className, ...rest }: InputHTMLAttributes<HTMLInputElement> & WithLabel & { icon?: ReactNode }) {
   return (
     <FieldShell label={label} hint={hint} help={help} className={wrapperClassName}>
-      {(id) => <input id={id} className={cx("field", className)} {...rest} />}
+      {(id) => icon ? (
+        <div className="field-with-icon">
+          <span className="field-icon" aria-hidden="true">{icon}</span>
+          <input id={id} className={cx("field field-has-icon", className)} {...rest} />
+        </div>
+      ) : <input id={id} className={cx("field", className)} {...rest} />}
     </FieldShell>
   );
 }
@@ -151,10 +157,15 @@ export function NumberInput({
   );
 }
 
-export function TextArea({ label, hint, help, wrapperClassName, className, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement> & WithLabel) {
+export function TextArea({ label, hint, help, icon, wrapperClassName, className, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement> & WithLabel & { icon?: ReactNode }) {
   return (
     <FieldShell label={label} hint={hint} help={help} className={wrapperClassName}>
-      {(id) => <textarea id={id} className={cx("field min-h-24 resize-y leading-relaxed", className)} {...rest} />}
+      {(id) => icon ? (
+        <div className="field-with-icon">
+          <span className="field-icon" aria-hidden="true">{icon}</span>
+          <textarea id={id} className={cx("field field-has-icon min-h-24 resize-y leading-relaxed", className)} {...rest} />
+        </div>
+      ) : <textarea id={id} className={cx("field min-h-24 resize-y leading-relaxed", className)} {...rest} />}
     </FieldShell>
   );
 }
@@ -190,13 +201,13 @@ export function Segmented<T extends string>({
   label?: string;
   help?: GlossaryKey;
   value: T;
-  options: { value: T; label: string; hint?: string }[];
+  options: { value: T; label: string; hint?: string; icon?: ReactNode }[];
   onChange: (v: T) => void;
 }) {
   return (
     <div>
       {label && <FieldLabel label={label} help={help} />}
-      <div role="radiogroup" aria-label={label} className="flex rounded-lg border border-line bg-parchment p-0.5">
+      <div role="radiogroup" aria-label={label} className="segmented flex rounded-lg border border-line bg-parchment p-0.5">
         {options.map((o) => (
           <button
             key={o.value}
@@ -206,10 +217,11 @@ export function Segmented<T extends string>({
             title={o.hint}
             onClick={() => onChange(o.value)}
             className={cx(
-              "min-h-9 min-w-0 flex-1 rounded-md px-1.5 py-1.5 text-[0.78rem] leading-tight font-medium transition-colors cursor-pointer sm:px-2.5 sm:text-[0.8rem]",
+              "segmented-option flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-1.5 py-2 text-[0.78rem] leading-tight font-medium transition-colors cursor-pointer sm:px-2.5 sm:text-[0.8rem]",
               value === o.value ? "bg-cream text-wine shadow-[var(--shadow-soft)] border border-line" : "text-muted hover:text-ink border border-transparent",
             )}
           >
+            {o.icon && <span className="shrink-0" aria-hidden="true">{o.icon}</span>}
             {o.label}
           </button>
         ))}
@@ -338,7 +350,7 @@ export function ArcaneWait({
   }, [phrases.length]);
   const sm = size === "sm";
   return (
-    <div role="status" className={cx(sm ? "flex items-center gap-3 text-left" : "flex flex-col items-center gap-4 text-center", className)}>
+    <div role="status" className={cx("arcane-surface", sm ? "flex items-center gap-3 text-left" : "flex flex-col items-center gap-4 text-center", className)}>
       <RuneCircle className={sm ? "size-11 shrink-0" : "size-24"} />
       <div className="min-w-0">
         <span className="sr-only">
@@ -377,7 +389,7 @@ export function Badge({ children, tone = "neutral", className }: { children: Rea
     amber: "bg-amber-soft text-amber border-amber-line",
   };
   return (
-    <span className={cx("inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[0.7rem] font-semibold", tones[tone], className)}>
+    <span className={cx("inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium", tones[tone], className)}>
       {children}
     </span>
   );
@@ -407,7 +419,7 @@ export function EmptyState({
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
     <div className="card flex flex-col items-center gap-3 px-6 py-10 text-center">
-      <p className="text-sm text-wine">{message}</p>
+      <p role="alert" className="text-sm text-danger">{message}</p>
       {onRetry && (
         <Button size="sm" onClick={onRetry}>
           Tentar novamente
@@ -429,11 +441,11 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        {eyebrow && <div className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted">{eyebrow}</div>}
-        <h1 className="text-[2.1rem] leading-tight font-semibold">{title}</h1>
-        {description && <p className="mt-1.5 max-w-2xl text-sm text-muted">{description}</p>}
+        {eyebrow && <div className="chapter-label mb-3">{eyebrow}</div>}
+        <h1 className="page-title">{title}</h1>
+        {description && <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>
