@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap");
 @import "tailwindcss";
 
 /* Códice Vivo: a mesa escura acolhe a navegação; o pergaminho recebe a escrita.
@@ -62,8 +63,8 @@
   --color-amber-line: var(--color-wine-line);
   --color-focus: var(--color-gold);
 
-  --font-display: "EB Garamond", "Iowan Old Style", Georgia, serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Alegreya", Georgia, "Times New Roman", serif;
+  --font-sans: "Alegreya Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
   --radius-ui: 0.75rem;
   --radius-card: 1.125rem;
@@ -454,6 +455,8 @@
 
 /* Os ajustes de controles vencem as utilidades de cor/tamanho somente no pergaminho. */
 @layer utilities {
+  .paper-surface.parchment-form { border-width: 0; }
+  .font-display.tabular-nums { font-variant-numeric: lining-nums tabular-nums; }
   .parchment-form .section-title {
     font-family: var(--font-display);
     font-size: clamp(1.9rem, 2.6vw, 2.35rem);
@@ -550,6 +553,7 @@
   .parchment-form :is(.segmented-option[aria-checked="true"], button[aria-pressed="true"]) svg { color: var(--color-gold-bright); }
   .parchment-form .button[data-variant="danger"] { color: var(--color-danger-ink); border-color: var(--color-danger-ink); }
   .parchment-form .form-choice:has(input:checked) { border-color: var(--color-form-wine); }
+  .parchment-form [role="switch"] > span { background-color: var(--color-page-light); }
   .parchment-form :is(.help-tip, .field-icon) { color: var(--color-form-wine); }
   .parchment-form .help-tip svg { width: 1.125rem; height: 1.125rem; }
   .parchment-form input[type="checkbox"] {
@@ -578,11 +582,14 @@
   .parchment-form :is(button, input[type="checkbox"]):focus-visible { outline: 2px solid var(--color-form-wine); outline-offset: 3px; }
   .parchment-form :is(button, input, textarea, select):disabled { opacity: 0.55; cursor: not-allowed; }
   @media (hover: hover) and (pointer: fine) {
-    .parchment-form :is(.button, .icon-button, button[aria-pressed]):hover:not(:disabled),
+    .parchment-form :is(.button, .icon-button, .form-choice, button[aria-pressed]):hover:not(:disabled),
     .parchment-form .segmented-option[aria-checked="false"]:hover {
       background-color: var(--color-form-glass-highlight);
       border-color: var(--color-form-wine);
     }
+  }
+  @media (max-width: 29.999rem) {
+    .ai-creation-form .segmented { flex-direction: column; }
   }
   @media (forced-colors: active) {
     .parchment-form input[type="checkbox"] { appearance: auto; }

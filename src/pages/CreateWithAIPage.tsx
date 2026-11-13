@@ -245,28 +245,28 @@ export function CreateWithAIPage() {
   }
 
   const form = (
-    <section className="card border-arcane-dim p-5 sm:p-6">
-      <div className="mb-5 flex items-center gap-2 text-xs font-medium text-arcane"><Sparkles className="size-4" /> Convide uma ideia. Escolha o que permanece.</div>
+    <section className="card paper-surface parchment-form ai-creation-form">
+      <div className="mb-5 flex items-center gap-2 text-sm font-semibold text-wine"><Sparkles className="size-4 shrink-0" aria-hidden="true" /> Convide uma ideia. Escolha o que permanece.</div>
       <TextArea
         label="Descreva a criatura que você imagina"
         hint="Escreva com as suas palavras: aparência, onde vive, o que faz. Não precisa saber as regras do jogo."
         value={settings.description}
         onChange={(e) => set("description", e.target.value)}
         placeholder={EXAMPLES[0]}
-        className="min-h-36 text-[0.95rem]"
+        rows={5}
         maxLength={4000}
         disabled={generating}
       />
       <div className="mt-2 flex flex-wrap gap-1.5">
-        <span className="inline-flex items-center gap-1 text-xs text-muted">
-          <Lightbulb className="size-3.5" /> Exemplos:
+        <span className="inline-flex items-center gap-1 text-sm text-muted">
+          <Lightbulb className="size-4 shrink-0" aria-hidden="true" /> Exemplos:
         </span>
         {EXAMPLES.slice(1).map((ex) => (
           <button
             key={ex}
             type="button"
             onClick={() => set("description", ex)}
-            className="max-w-xs truncate rounded-full border border-line bg-parchment px-2.5 py-0.5 text-xs text-ink-soft hover:border-wine-line hover:text-wine cursor-pointer"
+            className="form-choice min-h-11 min-w-0 max-w-full truncate rounded-[var(--radius-ui)] px-3 py-2 text-base transition-colors cursor-pointer sm:max-w-xs"
             title={ex}
           >
             {ex}
@@ -274,7 +274,7 @@ export function CreateWithAIPage() {
         ))}
       </div>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-5 grid items-end gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Select label="Universo" value={universeId} onChange={(e) => setCurrentId(e.target.value)} disabled={generating}>
           {universes.map((u) => (
             <option key={u.id} value={u.id}>
@@ -304,25 +304,27 @@ export function CreateWithAIPage() {
           <option value="3">3 propostas</option>
         </Select>
       </div>
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
+      <div className="mt-4 grid gap-4 xl:grid-cols-2">
         <Segmented label="Nível de criatividade" help="criatividade" value={settings.creativity} onChange={(v) => set("creativity", v)} options={CREATIVITY_OPTIONS} />
         <Segmented label="Nível de detalhamento" help="detalhamento" value={settings.detail} onChange={(v) => set("detail", v)} options={DETAIL_OPTIONS} />
       </div>
       <div className="mt-5 flex flex-col gap-4 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <Toggle
-          checked={settings.useContext}
-          onChange={(v) => set("useContext", v)}
-          label={`Usar contexto de “${current.name}”`}
-          help="contextoUniverso"
-          description="Ambientação, época, nível de fantasia e regras do universo."
-        />
+        <div className="min-w-0 rounded-[var(--radius-ui)] bg-page-light/85 px-3 py-2 [overflow-wrap:anywhere]">
+          <Toggle
+            checked={settings.useContext}
+            onChange={(v) => set("useContext", v)}
+            label={`Usar contexto de “${current.name}”`}
+            help="contextoUniverso"
+            description="Ambientação, época, nível de fantasia e regras do universo."
+          />
+        </div>
         <Button
           variant="primary"
           icon={<D20 className="size-4" />}
           busyIcon={rollingD20}
           onClick={() => generate("replace")}
           loading={generating}
-          className="h-11 px-6"
+          className="min-h-11 shrink-0 px-6"
         >
           {generating ? "Gerando sugestões…" : "Gerar sugestões"}
         </Button>

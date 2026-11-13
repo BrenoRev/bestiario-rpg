@@ -92,12 +92,12 @@ Não tentar converter cada elemento em pergaminho. **A casca de navegação é u
 
 | Contexto | Preferência | Fallback | Escala |
 |---|---|---|---|
-| Títulos, nomes de mundos, capítulo | `EB Garamond` | Georgia, serif | `clamp(42px, 6vw, 76px)` / 1.02 |
-| Títulos de cards e fichas | `EB Garamond` | Georgia, serif | 26–36px / 1.05–1.15 |
-| Corpo e controles | `Inter` ou sistema | Segoe UI, Arial, sans-serif | 14–16px / 1.5–1.65 |
-| Crônica narrativa | `EB Garamond` | Georgia, serif | 19–21px / 1.55 |
+| Títulos, nomes de mundos, capítulo | `Alegreya` | Georgia, serif | `clamp(42px, 6vw, 76px)` / 1.02 |
+| Títulos de cards e fichas | `Alegreya` | Georgia, serif | 26–36px / 1.05–1.15 |
+| Corpo e controles | `Alegreya Sans` ou sistema | Segoe UI, Arial, sans-serif | 14–16px / 1.5–1.65 |
+| Crônica narrativa | `Alegreya` | Georgia, serif | 19–21px / 1.55 |
 | Rótulos de capítulos/metadados | sans 600 | sistema | 10–12px / 0.13em tracking |
-| Valores de atributos | `EB Garamond` 600 | Georgia | 25–32px / tabular quando numérico |
+| Valores de atributos | `Alegreya` 600 | Georgia | 25–32px / algarismos alinhados e de altura regular |
 
 **Decisão sobre os originais:** adotar a densidade editorial e tracking apertado do Duna nos títulos, legibilidade do corpo Playdate e contraste dramático do Portal; rejeitar o peso 900 generalizado e preferir uma serifada literária. Letras capitulares, separadores em losango e numeração romana podem ser usados **somente** em aberturas.
 
@@ -125,7 +125,7 @@ Não tentar converter cada elemento em pergaminho. **A casca de navegação é u
 4. **Cartão de criatura:** quadro de ilustração ou sigilo; ND visível; título serifado; atributos resumidos; ação explícita.
 5. **Ficha do monstro:** painel de papel, cabeçalhos rubros, seis atributos em grade, réguas horizontais, ações agrupadas, legenda e narrativa em aba independente; retrato lateral emoldurado.
 6. **Editor:** navegação por capítulos à esquerda, formulário em pergaminho; estados de alteração evidentes; botão “Salvar ficha” fixo na hierarquia.
-7. **Forja de IA:** superfície escura, topo arcano e proposta sobre papel; campos comparados antes/depois; a aprovação continua ação humana.
+7. **Forja de IA:** página escura e topo arcano; pedido sobre o mesmo pergaminho dos formulários de universos e criaturas, com controles translúcidos e seleção em vinho/dourado; propostas sobre papel; campos comparados antes/depois; a aprovação continua ação humana.
 8. **Glossário:** cartões de papel com definições simples, busca sempre evidente.
 9. **Modal:** painel escuro com borda ouro, contraste, campo de preenchimento legível; ações reversíveis e foco visível.
 10. **Entrada/autenticação:** cena à esquerda e formulário à direita; nenhuma indicação enganosa de login real no protótipo.
@@ -232,8 +232,8 @@ Não tentar converter cada elemento em pergaminho. **A casca de navegação é u
   --arcane-dim: #665374;
   --success: #8daa92;
   --danger: #cf8477;
-  --font-display: "EB Garamond", Georgia, "Times New Roman", serif;
-  --font-interface: Inter, "Segoe UI", Arial, sans-serif;
+  --font-display: "Alegreya", Georgia, "Times New Roman", serif;
+  --font-interface: "Alegreya Sans", "Segoe UI", Arial, sans-serif;
   --radius-ui: 12px;
   --radius-card: 18px;
   --radius-paper: 6px;
@@ -243,7 +243,7 @@ Não tentar converter cada elemento em pergaminho. **A casca de navegação é u
 }
 ```
 
-**Fonte livre de boa aproximação:** `EB Garamond`/Georgia para editorial, `Inter`/Segoe UI para interface. O projeto usa fontes do sistema quando não houver a família específica instalada; não inclui fontes pagas dos design systems de origem.
+**Dupla tipográfica da plataforma, atualizada por solicitação do usuário:** Alegreya para títulos, crônicas e controles sobre pergaminho; Alegreya Sans para a interface e os números editáveis. O Google Fonts fornece os pesos 400, 500, 600 e 700, normais e itálicos, com `display=swap`. Georgia e as fontes de interface do sistema mantêm a leitura enquanto as famílias carregam ou quando estiverem indisponíveis.
 
 ---
 

@@ -1,4 +1,4 @@
-import { ArrowRight, LockKeyhole, LogIn, UserPlus } from "lucide-react";
+import { LockKeyhole, LogIn, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Navigate, useLocation } from "react-router";
 import { Logo } from "../components/brand";
@@ -128,7 +128,6 @@ export function LoginPage() {
               icon={mode === "entrar" ? <LogIn className="size-4" /> : <UserPlus className="size-4" />}
             >
               {mode === "entrar" ? "Entrar" : "Criar conta"}
-              <ArrowRight className="ml-auto size-4" aria-hidden="true" />
             </Button>
           </form>
 
