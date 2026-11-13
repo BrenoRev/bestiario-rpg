@@ -145,8 +145,23 @@ function TagInput({ label, values, onChange, suggestions, help }: { label: strin
 }
 
 // ---------------------------------------------------------------- Formulário
-export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChange: (next: CreatureDraft) => void }) {
+export type CreatureFormMode = "steps" | "full";
+export type CreatureFormStep = 1 | 2 | 3 | 4;
+
+export function CreatureForm({
+  value,
+  onChange,
+  mode = "full",
+  step = 1,
+}: {
+  value: CreatureDraft;
+  onChange: (next: CreatureDraft) => void;
+  mode?: CreatureFormMode;
+  step?: CreatureFormStep;
+}) {
   const c = value;
+  const stepMode = mode === "steps";
+  const showStep = (value: CreatureFormStep) => !stepMode || step === value;
   const set: Patch = (key, v) => onChange({ ...c, [key]: v });
   const setSpeed = (key: keyof Speed, v: number | boolean) => set("speed", { ...c.speed, [key]: v });
   const setAbility = (key: Ability, v: number) => set("abilities", { ...c.abilities, [key]: Math.max(1, Math.min(30, v || 1)) });
@@ -176,20 +191,64 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
 
   return (
     <div className="space-y-5">
-      <nav className="grid grid-cols-2 gap-2 sm:grid-cols-3" aria-label="Capítulos da ficha">
-        {[
-          ["identidade", "Identidade"], ["atributos", "Atributos"], ["combate", "Combate"],
-          ["defesas", "Defesas e perícias"], ["habilidades", "Habilidades"], ["cronica", "Crônica"],
-        ].map(([id, label], i) => (
-          <a key={id} href={`#ficha-${id}`} className="flex min-h-11 items-center gap-2 rounded-xl border border-line bg-cream px-3 py-2 text-xs text-ink-soft hover:border-gold/50 hover:text-gold">
-            <span className="text-gold" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span> {label}
-          </a>
-        ))}
-      </nav>
+      {stepMode ? (
+        <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Etapas da ficha">
+          {[
+            ["Conceito", "A ideia da criatura"],
+            ["Identidade", "Quem ela é"],
+            ["Combate", "Como ela age"],
+            ["Habilidades e história", "O que a torna única"],
+          ].map(([label, description], i) => {
+            const current = i + 1 === step;
+            return (
+              <li
+                key={label}
+                aria-current={current ? "step" : undefined}
+                className={cx(
+                  "rounded-xl border px-3 py-2 text-xs",
+                  current ? "border-wine-line bg-wine-soft text-wine" : "border-line bg-cream text-muted",
+                )}
+              >
+                <span className="font-semibold">{String(i + 1).padStart(2, "0")} · {label}</span>
+                <span className="mt-0.5 block text-[0.7rem]">{description}</span>
+              </li>
+            );
+          })}
+        </ol>
+      ) : (
+        <nav className="grid grid-cols-2 gap-2 sm:grid-cols-3" aria-label="Capítulos da ficha">
+          {[
+            ["identidade", "Identidade"], ["atributos", "Atributos"], ["combate", "Combate"],
+            ["defesas", "Defesas e perícias"], ["habilidades", "Habilidades"], ["cronica", "Crônica"],
+          ].map(([id, label], i) => (
+            <a key={id} href={`#ficha-${id}`} className="flex min-h-11 items-center gap-2 rounded-xl border border-line bg-cream px-3 py-2 text-xs text-ink-soft hover:border-wine-line hover:text-wine">
+              <span className="text-wine" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span> {label}
+            </a>
+          ))}
+        </nav>
+      )}
+
+      {stepMode && step === 1 && (
+        <Section id="ficha-conceito" title="Conceito da criatura" description="Você não precisa conhecer D&D. Conte a ideia com as suas palavras; os detalhes podem ser definidos depois.">
+          <div className="grid gap-4">
+            <TextInput label="Nome da criatura" required value={c.name} onChange={(e) => set("name", e.target.value)} maxLength={120} placeholder="Ex.: Espreitador das Raízes" />
+            <TextArea
+              label="O que você imagina?"
+              required
+              value={c.appearance}
+              onChange={(e) => set("appearance", e.target.value)}
+              placeholder="Ex.: Um cervo feito de raízes que protege uma floresta e desaparece quando alguém mente."
+              hint="A aparência e a ideia serão o ponto de partida para completar a ficha."
+              className="min-h-36"
+            />
+          </div>
+        </Section>
+      )}
+
       {/* ------------------------------------------------ Informações gerais */}
-      <Section id="ficha-identidade" title="Informações gerais">
+      {showStep(2) && <Section id="ficha-identidade" title="Identidade" description={stepMode ? "Esses detalhes são opcionais. Você pode deixar a IA ou o padrão da ficha sugeri-los depois." : undefined}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <TextInput label="Nome da criatura" required value={c.name} onChange={(e) => set("name", e.target.value)} wrapperClassName="sm:col-span-2 lg:col-span-3" maxLength={120} placeholder="Ex.: Espreitador das Raízes" />
+          {mode === "full" && <TextInput label="Nome da criatura" required value={c.name} onChange={(e) => set("name", e.target.value)} wrapperClassName="sm:col-span-2 lg:col-span-3" maxLength={120} placeholder="Ex.: Espreitador das Raízes" />}
           <Select label="Tamanho" help="tamanho" value={c.size} onChange={(e) => set("size", e.target.value as CreatureDraft["size"])}>
             {SIZES.map((s) => (
               <option key={s.value} value={s.value}>
@@ -236,10 +295,10 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
             </p>
           </div>
         )}
-      </Section>
+      </Section>}
 
       {/* ------------------------------------------------ Atributos */}
-      <Section id="ficha-atributos" title="Atributos" help="atributos" description="Notas de 1 a 30; 10 é a média humana. O número embaixo é o modificador usado nas jogadas.">
+      {showStep(3) && <Section id="ficha-atributos" title="Atributos" help="atributos" description="Notas de 1 a 30; 10 é a média humana. O número embaixo é o modificador usado nas jogadas.">
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
           {ABILITIES.map((a) => (
             <div key={a.value} className="form-choice rounded-lg border border-line bg-parchment/70 p-2.5 text-center">
@@ -259,10 +318,10 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
             </div>
           ))}
         </div>
-      </Section>
+      </Section>}
 
       {/* ------------------------------------------------ Combate */}
-      <Section id="ficha-combate" title="Estatísticas de combate">
+      {showStep(3) && <Section id="ficha-combate" title="Estatísticas de combate" description={stepMode ? "Esses números são opcionais e podem ser ajustados depois com as referências de D&D." : undefined}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <NumberInput label="Classe de Armadura (CA)" help="ca" value={c.armor_class} onValue={(n) => set("armor_class", n)} min={1} max={30} />
           <TextInput label="Origem da CA" value={c.armor_note} onChange={(e) => set("armor_note", e.target.value)} placeholder="Ex.: armadura natural" />
@@ -305,10 +364,10 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
             Pode pairar
           </label>
         </div>
-      </Section>
+      </Section>}
 
       {/* ------------------------------------------------ Resistências */}
-      <Section id="ficha-defesas" title="Resistências e vulnerabilidades" description="Testes de resistência, perícias, defesas, sentidos e idiomas.">
+      {showStep(3) && <Section id="ficha-defesas" title="Resistências e vulnerabilidades" description="Testes de resistência, perícias, defesas, sentidos e idiomas.">
         <div>
           <FieldLabel label="Testes de resistência (marque os pontos fortes)" help="testesResistencia" />
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
@@ -402,10 +461,10 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
           <TextInput label="Sentidos" help="sentidos" value={c.senses} onChange={(e) => set("senses", e.target.value)} placeholder="Ex.: visão no escuro 18 m, Percepção passiva 14" />
           <TextInput label="Idiomas" help="idiomas" value={c.languages} onChange={(e) => set("languages", e.target.value)} placeholder="Ex.: Comum, Silvestre; telepatia 18 m" />
         </div>
-      </Section>
+      </Section>}
 
       {/* ------------------------------------------------ Características */}
-      <Section id="ficha-habilidades" title="Características especiais" description="Traços passivos, ações e habilidades no formato dos livros de D&D.">
+      {showStep(4) && <Section id="ficha-habilidades" title="Características especiais" description={stepMode ? "Adicione apenas o que já souber. Você pode pedir sugestões ou completar a ficha mais tarde." : "Traços passivos, ações e habilidades no formato dos livros de D&D."}>
         <div className="space-y-6">
           <EntryListEditor help="tracos" label="Traços passivos" items={c.traits} onChange={(v) => set("traits", v)} addLabel="Adicionar traço" />
           <EntryListEditor help="acoes" label="Ações" items={c.actions} onChange={(v) => set("actions", v)} addLabel="Adicionar ação" />
@@ -426,10 +485,10 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
           </div>
           <EntryListEditor help="habilidadesEspeciais" label="Habilidades especiais" items={c.special_abilities} onChange={(v) => set("special_abilities", v)} addLabel="Adicionar habilidade especial" />
         </div>
-      </Section>
+      </Section>}
 
       {/* ------------------------------------------------ Narrativa */}
-      <Section id="ficha-cronica" title="Descrição narrativa" tone="story" description="A crônica da criatura: o que os jogadores veem, ouvem e descobrem.">
+      {showStep(4) && <Section id="ficha-cronica" title="Descrição narrativa" tone="story" description="A crônica da criatura: o que os jogadores veem, ouvem e descobrem.">
         <div className="mb-4">
           <FieldLabel label="Ambientes" help="ambientes" />
           <div className="flex flex-wrap gap-1.5">
@@ -453,7 +512,7 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          <TextArea label="Aparência física" value={c.appearance} onChange={(e) => set("appearance", e.target.value)} wrapperClassName="md:col-span-2" hint="Seja concreto: formas, cores e texturas. É a base para gerar a ilustração." />
+          {mode === "full" && <TextArea label="Aparência física" value={c.appearance} onChange={(e) => set("appearance", e.target.value)} wrapperClassName="md:col-span-2" hint="Seja concreto: formas, cores e texturas. É a base para gerar a ilustração." />}
           <TextArea label="Habitat" value={c.habitat} onChange={(e) => set("habitat", e.target.value)} />
           <TextArea label="Comportamento" value={c.behavior} onChange={(e) => set("behavior", e.target.value)} />
           <TextArea label="Alimentação" value={c.diet} onChange={(e) => set("diet", e.target.value)} />
@@ -462,7 +521,7 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
           <TextArea label="Curiosidades" value={c.curiosities} onChange={(e) => set("curiosities", e.target.value)} />
           <TextArea label="Notas do mestre (privadas, a IA não altera)" value={c.notes} onChange={(e) => set("notes", e.target.value)} wrapperClassName="md:col-span-2" />
         </div>
-      </Section>
+      </Section>}
     </div>
   );
 }

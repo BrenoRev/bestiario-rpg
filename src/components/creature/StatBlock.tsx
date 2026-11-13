@@ -1,6 +1,6 @@
 // Ficha de monstro no formato de D&D 5e (parte mecânica) e a crônica
 // (parte narrativa), visualmente separadas.
-import { ABILITIES, abilityMod, abilityShort, formatSpeed, habitatLabel, signed, xpForCR } from "../../lib/dnd";
+import { ABILITIES, abilityMod, abilityShort, formatSpeed, habitatLabel, signed, sizeLabel, typeLabel, xpForCR } from "../../lib/dnd";
 import { creatureSubtitle } from "../../lib/creature";
 import type { CreatureDraft, Entry } from "../../lib/types";
 import { Badge, cx } from "../ui";
@@ -128,6 +128,65 @@ export function StatBlock({ creature, compact, transitionName }: { creature: Cre
         <>
           <h3 className="stat-heading">Habilidades Especiais</h3>
           <Entries items={c.special_abilities} />
+        </>
+      )}
+    </article>
+  );
+}
+
+export function CreatureOverview({ creature, transitionName }: { creature: CreatureDraft; transitionName?: string }) {
+  const c = creature;
+  const narrative = [
+    ["Aparência física", c.appearance],
+    ["Comportamento", c.behavior],
+    ["Habitat", c.habitat],
+  ].filter(([, value]) => value.trim());
+  const abilities = [...c.traits, ...c.actions].filter((entry) => entry.name.trim() || entry.description.trim()).slice(0, 3);
+
+  return (
+    <article className="card ornate px-5 py-5 sm:px-7 sm:py-6" aria-label="Resumo da criatura">
+      <header>
+        <h2 className="w-fit text-[2rem] leading-none font-bold text-wine" style={{ viewTransitionName: transitionName }}>
+          {c.name || "Criatura sem nome"}
+        </h2>
+        <p className="mt-1.5 text-sm italic text-ink-soft first-letter:uppercase">{creatureSubtitle(c)}</p>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          <Badge tone="wine">{typeLabel(c.creature_type)}</Badge>
+          <Badge tone="neutral">{sizeLabel(c.size)}</Badge>
+          <Badge tone="amber">ND {c.challenge_rating}</Badge>
+          {c.habitat_tags.map((h) => (
+            <Badge key={h} tone="moss">
+              {habitatLabel(h)}
+            </Badge>
+          ))}
+        </div>
+      </header>
+
+      <hr className="stat-rule" />
+      <div className="space-y-0.5">
+        <Line label="Classe de Armadura">{c.armor_class}{c.armor_note ? ` (${c.armor_note})` : ""}</Line>
+        <Line label="Pontos de Vida">{c.hit_points}{c.hit_dice ? ` (${c.hit_dice})` : ""}</Line>
+        <Line label="Deslocamento">{formatSpeed(c.speed)}</Line>
+      </div>
+
+      {narrative.length > 0 && (
+        <>
+          <hr className="stat-rule" />
+          <div className="space-y-4">
+            {narrative.map(([label, value], i) => (
+              <div key={label}>
+                <h3 className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-muted">{label}</h3>
+                <p className={cx("mt-1 text-[0.92rem] leading-relaxed whitespace-pre-line", i === 0 && "drop-cap")}>{value}</p>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {abilities.length > 0 && (
+        <>
+          <h3 className="stat-heading">Principais habilidades</h3>
+          <Entries items={abilities} />
         </>
       )}
     </article>
