@@ -16,13 +16,13 @@ type Patch = <K extends keyof CreatureDraft>(key: K, value: CreatureDraft[K]) =>
 
 function Section({ id, title, description, children, tone = "mech", help }: { id: string; title: string; description?: string; children: ReactNode; tone?: "mech" | "story"; help?: GlossaryKey }) {
   return (
-    <section id={id} className={cx("paper-surface scroll-mt-40 border border-line p-5 sm:p-6", tone === "story" && "prose-sheet")}>
+    <section id={id} className={cx("paper-surface parchment-form scroll-mt-40 border border-line", tone === "story" && "prose-sheet")}>
       <div className="mb-4">
         <div className="flex items-center gap-1.5">
           <h2 className="section-title">{title}</h2>
           {help && <HelpTip term={help} />}
         </div>
-        {description && <p className="mt-0.5 text-xs text-muted">{description}</p>}
+        {description && <p className="form-description mt-0.5 text-xs text-muted">{description}</p>}
       </div>
       {children}
     </section>
@@ -242,7 +242,7 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
       <Section id="ficha-atributos" title="Atributos" help="atributos" description="Notas de 1 a 30; 10 é a média humana. O número embaixo é o modificador usado nas jogadas.">
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
           {ABILITIES.map((a) => (
-            <div key={a.value} className="rounded-lg border border-line bg-parchment/70 p-2.5 text-center">
+            <div key={a.value} className="form-choice rounded-lg border border-line bg-parchment/70 p-2.5 text-center">
               <label htmlFor={`ab-${a.value}`} className="block text-xs font-bold tracking-wider text-wine" title={a.label}>
                 {a.short}
               </label>
@@ -253,7 +253,7 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
                 max={30}
                 value={c.abilities[a.value]}
                 onChange={(e) => setAbility(a.value, Number(e.target.value))}
-                className="mt-1 w-full rounded-md border border-line bg-cream py-1 text-center text-lg font-semibold tabular-nums focus:border-wine focus:outline-none"
+                className="field ability-input mt-1 text-center font-semibold tabular-nums"
               />
               <div className="mt-1 text-xs text-muted tabular-nums">{signed(abilityMod(c.abilities[a.value]))}</div>
             </div>
@@ -315,7 +315,7 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
             {ABILITIES.map((a) => {
               const save = c.saving_throws.find((s) => s.ability === a.value);
               return (
-                <div key={a.value} className={cx("rounded-lg border", save ? "border-wine-line bg-wine-soft/60" : "border-line bg-parchment/60")}>
+                <div key={a.value} className={cx("form-choice rounded-lg border", save ? "border-wine-line bg-wine-soft/60" : "border-line bg-parchment/60")}>
                   <label className="flex min-h-10 cursor-pointer items-center gap-2 px-2 text-sm font-semibold">
                     <input type="checkbox" className="accent-wine" checked={!!save} onChange={() => toggleSave(a.value)} />
                     {a.short}
@@ -331,7 +331,7 @@ export function CreatureForm({ value, onChange }: { value: CreatureDraft; onChan
                           c.saving_throws.map((s) => (s.ability === a.value ? { ...s, bonus: Number(e.target.value) } : s)),
                         )
                       }
-                      className="mx-2 mb-2 w-[calc(100%-1rem)] rounded-md border border-line bg-cream px-2 py-1.5 text-sm tabular-nums"
+                      className="field save-bonus mx-2 mb-2 w-[calc(100%-1rem)] tabular-nums"
                     />
                   )}
                 </div>

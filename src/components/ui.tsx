@@ -35,6 +35,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     <button
       ref={ref}
       type={type}
+      data-variant={variant}
       disabled={disabled || loading}
       className={cx(
         "button inline-flex items-center justify-center gap-2 font-medium whitespace-nowrap",
@@ -116,10 +117,15 @@ export function FieldShell({ label, hint, help, className, children }: FieldShel
 
 type WithLabel = { label?: string; hint?: ReactNode; help?: GlossaryKey; wrapperClassName?: string };
 
-export function TextInput({ label, hint, help, wrapperClassName, className, ...rest }: InputHTMLAttributes<HTMLInputElement> & WithLabel) {
+export function TextInput({ label, hint, help, icon, wrapperClassName, className, ...rest }: InputHTMLAttributes<HTMLInputElement> & WithLabel & { icon?: ReactNode }) {
   return (
     <FieldShell label={label} hint={hint} help={help} className={wrapperClassName}>
-      {(id) => <input id={id} className={cx("field", className)} {...rest} />}
+      {(id) => icon ? (
+        <div className="field-with-icon">
+          <span className="field-icon" aria-hidden="true">{icon}</span>
+          <input id={id} className={cx("field field-has-icon", className)} {...rest} />
+        </div>
+      ) : <input id={id} className={cx("field", className)} {...rest} />}
     </FieldShell>
   );
 }
@@ -151,10 +157,15 @@ export function NumberInput({
   );
 }
 
-export function TextArea({ label, hint, help, wrapperClassName, className, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement> & WithLabel) {
+export function TextArea({ label, hint, help, icon, wrapperClassName, className, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement> & WithLabel & { icon?: ReactNode }) {
   return (
     <FieldShell label={label} hint={hint} help={help} className={wrapperClassName}>
-      {(id) => <textarea id={id} className={cx("field min-h-24 resize-y leading-relaxed", className)} {...rest} />}
+      {(id) => icon ? (
+        <div className="field-with-icon">
+          <span className="field-icon" aria-hidden="true">{icon}</span>
+          <textarea id={id} className={cx("field field-has-icon min-h-24 resize-y leading-relaxed", className)} {...rest} />
+        </div>
+      ) : <textarea id={id} className={cx("field min-h-24 resize-y leading-relaxed", className)} {...rest} />}
     </FieldShell>
   );
 }
@@ -190,13 +201,13 @@ export function Segmented<T extends string>({
   label?: string;
   help?: GlossaryKey;
   value: T;
-  options: { value: T; label: string; hint?: string }[];
+  options: { value: T; label: string; hint?: string; icon?: ReactNode }[];
   onChange: (v: T) => void;
 }) {
   return (
     <div>
       {label && <FieldLabel label={label} help={help} />}
-      <div role="radiogroup" aria-label={label} className="flex rounded-lg border border-line bg-parchment p-0.5">
+      <div role="radiogroup" aria-label={label} className="segmented flex rounded-lg border border-line bg-parchment p-0.5">
         {options.map((o) => (
           <button
             key={o.value}
@@ -206,10 +217,11 @@ export function Segmented<T extends string>({
             title={o.hint}
             onClick={() => onChange(o.value)}
             className={cx(
-              "min-h-11 min-w-0 flex-1 rounded-lg px-1.5 py-2 text-[0.78rem] leading-tight font-medium transition-colors cursor-pointer sm:px-2.5 sm:text-[0.8rem]",
+              "segmented-option flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-1.5 py-2 text-[0.78rem] leading-tight font-medium transition-colors cursor-pointer sm:px-2.5 sm:text-[0.8rem]",
               value === o.value ? "bg-cream text-wine shadow-[var(--shadow-soft)] border border-line" : "text-muted hover:text-ink border border-transparent",
             )}
           >
+            {o.icon && <span className="shrink-0" aria-hidden="true">{o.icon}</span>}
             {o.label}
           </button>
         ))}

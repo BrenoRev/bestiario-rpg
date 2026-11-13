@@ -64,7 +64,7 @@ export function LoginPage() {
         <img src="/login-campaign.png" alt="" aria-hidden="true" className="login-art" fetchPriority="high" />
         <div className="login-scene-content"><Logo /></div>
         <div className="login-scene-content login-story animate-rise">
-          <p className="chapter-label mb-4 hidden lg:block">Um mundo de possibilidades</p>
+          <p className="chapter-label mb-4 hidden w-fit max-w-full rounded-md bg-gold px-2 py-0.5 text-night lg:block">Um mundo de possibilidades</p>
           <h2>Toda criatura guarda uma história. <em className="text-gold">Dê vida à sua.</em></h2>
           <p className="mt-5 hidden max-w-md text-sm leading-relaxed text-silver-muted lg:block">
             Forje universos, reúna lendas e transforme ideias em encontros memoráveis. O mestre decide cada detalhe.
