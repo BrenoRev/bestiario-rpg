@@ -8,6 +8,8 @@ paths:
 
 Identidade: **Códice Vivo**, conforme `DESIGN-SYSTEM.md`, fornecido e aprovado pelo usuário. Casca de navegação em carvão/ameixa, documentos em pergaminho, dourado fosco nas ações e lilás pontual nos recursos de IA. A referência descreve um protótipo; nesta aplicação, autenticação, banco e IA continuam usando as integrações reais existentes. Não introduza simulações. A imagem fornecida está em `public/login-campaign.png`, no login e na abertura de Meus Mundos.
 
+Marca oficial fornecida pelo usuário: `public/logo-bestiario.png` é a logo completa, usada no login, na navegação lateral e nos espaços de apresentação da marca. `public/logo-bestiario-compact.png` é o símbolo compacto, usado no topo móvel, no favicon e nos estados sem capa/ilustração de `StoredImage`. `Logo` enquadra os PNGs em uma janela SVG para eliminar as margens vazias na exibição, preservando os arquivos, as proporções e a transparência. Não recrie a marca com texto ou com o dado `D20`; esse dado continua sendo ícone funcional de RPG/IA. Dentro de um placeholder já nomeado para acessibilidade, use `Logo compact decorative`.
+
 ## Use os primitivos existentes
 
 | Arquivo | Componentes |

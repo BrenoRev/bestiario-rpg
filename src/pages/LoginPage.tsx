@@ -62,7 +62,7 @@ export function LoginPage() {
     <div className="login-page">
       <div className="login-scene flex flex-col justify-between">
         <img src="/login-campaign.png" alt="" aria-hidden="true" className="login-art" fetchPriority="high" />
-        <div className="login-scene-content"><Logo /></div>
+        <div className="login-scene-content"><Logo className="login-logo" /></div>
         <div className="login-scene-content login-story animate-rise">
           <p className="chapter-label mb-4 hidden w-fit max-w-full rounded-md bg-gold px-2 py-0.5 text-night lg:block">Um mundo de possibilidades</p>
           <h2>Toda criatura guarda uma história. <em className="text-gold">Dê vida à sua.</em></h2>

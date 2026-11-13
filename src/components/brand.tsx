@@ -1,19 +1,25 @@
 import { useSignedUrl } from "../hooks/queries";
 import { cx } from "./ui";
 
-export function Logo({ className, compact }: { className?: string; compact?: boolean }) {
+/** O enquadramento remove só a margem vazia da exibição; os PNGs originais ficam intactos. */
+export function Logo({ className, compact, decorative }: { className?: string; compact?: boolean; decorative?: boolean }) {
   return (
-    <div className={cx("flex items-center gap-3", className)}>
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-gold/35 bg-gold/5 text-gold">
-        <D20 className="size-7" />
-      </span>
-      {!compact && (
-        <span className="flex flex-col">
-          <span className="font-display text-[1.85rem] leading-none tracking-tight text-silver">Bestiário</span>
-          <span className="mt-1.5 text-[0.6rem] font-medium uppercase tracking-[0.26em] text-gold">Códice Vivo</span>
-        </span>
-      )}
-    </div>
+    <svg
+      viewBox={compact ? "158 56 938 1110" : "7 183 1661 608"}
+      width={compact ? 938 : 1661}
+      height={compact ? 1110 : 608}
+      role={decorative ? undefined : "img"}
+      aria-label={decorative ? undefined : "Bestiário"}
+      aria-hidden={decorative || undefined}
+      focusable="false"
+      className={cx("brand-logo", compact ? "brand-logo--compact" : "brand-logo--full", className)}
+    >
+      <image
+        href={compact ? "/logo-bestiario-compact.png" : "/logo-bestiario.png"}
+        width={compact ? 1254 : 1672}
+        height={compact ? 1254 : 941}
+      />
+    </svg>
   );
 }
 
@@ -52,7 +58,7 @@ export function WaxSeal({ className, label }: { className?: string; label?: stri
   );
 }
 
-/** Imagem do Storage privado (URL assinada) com placeholder de gravura. */
+/** Imagem do Storage privado (URL assinada) com a marca compacta quando não há imagem. */
 export function StoredImage({
   path,
   alt,
@@ -76,7 +82,7 @@ export function StoredImage({
         role="img"
         aria-label={fallbackLabel ?? "Sem ilustração"}
       >
-        <D20 className="size-14" />
+        <Logo compact decorative className="placeholder-logo" />
         {fallbackLabel && <span className="text-[0.65rem] font-medium uppercase tracking-[0.18em] text-silver-muted">{fallbackLabel}</span>}
       </div>
     );

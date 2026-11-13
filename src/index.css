@@ -336,13 +336,17 @@
   .icon-button { min-width: 2.625rem; min-height: 2.625rem; }
   .page-title { font-size: clamp(2.5rem, 4vw, 3.5rem); line-height: 1.05; font-weight: 500; }
   .chapter-label { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.17em; text-transform: uppercase; color: var(--color-gold); }
+  .brand-logo { display: block; max-width: 100%; overflow: hidden; flex-shrink: 0; }
+  .brand-logo--full { width: 13rem; height: auto; }
+  .brand-logo--compact { width: 2.75rem; height: 2.75rem; }
+  .login-logo { width: clamp(13rem, 22vw, 20rem); }
   .collectible-card { transition: transform var(--motion-fast) var(--motion-ease), border-color var(--motion-fast); }
   .collectible-card:focus-visible { border-color: var(--color-gold); }
   .image-placeholder {
     background: radial-gradient(ellipse at 50% 35%, var(--color-night-soft), var(--color-night));
     color: var(--color-gold);
   }
-  .image-placeholder > svg { opacity: 0.4; }
+  .image-placeholder .placeholder-logo { width: 42%; min-width: 1.5rem; max-width: 7rem; height: 58%; max-height: 8.5rem; }
   .mobile-nav { padding-bottom: env(safe-area-inset-bottom); }
   .editor-actions { bottom: calc(4.5rem + env(safe-area-inset-bottom)); }
   .toast-stack { bottom: 1.5rem; }
