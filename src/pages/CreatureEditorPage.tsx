@@ -123,25 +123,8 @@ export function CreatureEditorPage() {
 
   const stepMode = !editing && formMode === "steps";
 
-  const validateFirstStep = () => {
-    if (!universeId) {
-      toast.error("Escolha o universo da criatura.");
-      return false;
-    }
-    if (!draft?.name.trim()) {
-      toast.error("Dê um nome à criatura antes de continuar.");
-      return false;
-    }
-    if (!draft.appearance.trim()) {
-      toast.error("Conte como você imagina a criatura antes de continuar.");
-      return false;
-    }
-    return true;
-  };
-
   const nextStep = () => {
-    if (formStep === 1 && !validateFirstStep()) return;
-    setFormStep((current) => (current < 4 ? (current + 1) as CreatureFormStep : current));
+    setFormStep((current) => (current < 5 ? (current + 1) as CreatureFormStep : current));
   };
 
   const previousStep = () => {
@@ -189,7 +172,7 @@ export function CreatureEditorPage() {
       <Button icon={<Sparkles className="size-4" />} onClick={() => setAssist(true)} disabled={!universeId} aria-label="Assistente de IA" title="Assistente de IA">
         <span className="hidden sm:inline">Assistente de IA</span>
       </Button>
-      {(!stepMode || formStep === 4) && (
+      {(!stepMode || formStep === 5) && (
         <Button variant="primary" icon={<Save className="size-4" />} onClick={save} loading={saving} aria-label={editing ? "Salvar ficha" : "Salvar no bestiário"}>
           <span className="sm:hidden">Salvar ficha</span>
           <span className="hidden sm:inline">{editing ? "Salvar ficha" : "Salvar no bestiário"}</span>
@@ -205,7 +188,7 @@ export function CreatureEditorPage() {
       </button>
       <PageHeader
         title={editing ? `Editar ${creature?.name ?? "criatura"}` : incoming.draft ? "Revisar criatura sugerida" : "Nova criatura"}
-        description={stepMode ? "Comece pela ideia. Os detalhes de D&D são opcionais e podem ser preenchidos aos poucos." : "Preencha a ficha no padrão de D&D 5e. Você pode pedir sugestões à IA a qualquer momento; nada é aplicado sem sua revisão."}
+        description={stepMode ? "Comece por onde preferir. Os detalhes de D&D são opcionais e podem ser preenchidos aos poucos." : "Preencha a ficha no padrão de D&D 5e. Você pode pedir sugestões à IA a qualquer momento; nada é aplicado sem sua revisão."}
         actions={<>{modeToggle}{actions}</>}
       />
 
@@ -223,7 +206,7 @@ export function CreatureEditorPage() {
               </p>
             </div>
           )}
-          <CreatureForm value={draft} onChange={setDraft} mode={stepMode ? "steps" : "full"} step={formStep} />
+          <CreatureForm value={draft} onChange={setDraft} mode={stepMode ? "steps" : "full"} step={formStep} onStepChange={setFormStep} />
         </div>
 
         <aside className="side-panel space-y-4 [--side-panel-offset:12rem]">
@@ -253,7 +236,7 @@ export function CreatureEditorPage() {
             <Button onClick={previousStep} disabled={saving || formStep === 1}>
               Voltar
             </Button>
-            {formStep < 4 && (
+            {formStep < 5 && (
               <Button variant="primary" onClick={nextStep} disabled={saving}>
                 Próxima etapa
               </Button>

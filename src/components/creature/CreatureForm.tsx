@@ -146,18 +146,20 @@ function TagInput({ label, values, onChange, suggestions, help }: { label: strin
 
 // ---------------------------------------------------------------- Formulário
 export type CreatureFormMode = "steps" | "full";
-export type CreatureFormStep = 1 | 2 | 3 | 4;
+export type CreatureFormStep = 1 | 2 | 3 | 4 | 5;
 
 export function CreatureForm({
   value,
   onChange,
   mode = "full",
   step = 1,
+  onStepChange,
 }: {
   value: CreatureDraft;
   onChange: (next: CreatureDraft) => void;
   mode?: CreatureFormMode;
   step?: CreatureFormStep;
+  onStepChange?: (step: CreatureFormStep) => void;
 }) {
   const c = value;
   const stepMode = mode === "steps";
@@ -192,25 +194,29 @@ export function CreatureForm({
   return (
     <div className="space-y-5">
       {stepMode ? (
-        <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Etapas da ficha">
+        <ol className="grid grid-cols-2 gap-2 md:grid-cols-5" aria-label="Etapas da ficha">
           {[
             ["Conceito", "A ideia da criatura"],
             ["Identidade", "Quem ela é"],
             ["Combate", "Como ela age"],
-            ["Habilidades e história", "O que a torna única"],
+            ["Habilidades", "O que a torna única"],
+            ["História", "Sua crônica"],
           ].map(([label, description], i) => {
             const current = i + 1 === step;
             return (
-              <li
-                key={label}
-                aria-current={current ? "step" : undefined}
-                className={cx(
-                  "rounded-xl border px-3 py-2 text-xs",
-                  current ? "border-wine-line bg-wine-soft text-wine" : "border-line bg-cream text-muted",
-                )}
-              >
-                <span className="font-semibold">{String(i + 1).padStart(2, "0")} · {label}</span>
-                <span className="mt-0.5 block text-[0.7rem]">{description}</span>
+              <li key={label}>
+                <button
+                  type="button"
+                  aria-current={current ? "step" : undefined}
+                  onClick={() => onStepChange?.((i + 1) as CreatureFormStep)}
+                  className={cx(
+                    "min-h-15 w-full rounded-xl border px-3 py-2 text-left text-xs transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wine",
+                    current ? "border-wine-line bg-wine-soft text-wine" : "border-line bg-cream text-muted hover:border-wine-line hover:text-wine",
+                  )}
+                >
+                  <span className="font-semibold">{String(i + 1).padStart(2, "0")} · {label}</span>
+                  <span className="mt-0.5 block text-[0.7rem]">{description}</span>
+                </button>
               </li>
             );
           })}
@@ -488,7 +494,7 @@ export function CreatureForm({
       </Section>}
 
       {/* ------------------------------------------------ Narrativa */}
-      {showStep(4) && <Section id="ficha-cronica" title="Descrição narrativa" tone="story" description="A crônica da criatura: o que os jogadores veem, ouvem e descobrem.">
+      {showStep(5) && <Section id="ficha-cronica" title="Descrição narrativa" tone="story" description="A crônica da criatura: o que os jogadores veem, ouvem e descobrem.">
         <div className="mb-4">
           <FieldLabel label="Ambientes" help="ambientes" />
           <div className="flex flex-wrap gap-1.5">

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { AIAssistModal, VariationsModal } from "../components/creature/AIAssist";
 import { ImageStudio } from "../components/creature/ImageStudio";
-import { CreatureOverview, Narrative, StatBlock } from "../components/creature/StatBlock";
+import { Narrative, StatBlock } from "../components/creature/StatBlock";
 import { ConfirmDialog } from "../components/Modal";
 import { errorMessage, useToast } from "../components/Toast";
 import { Button, ErrorState, PageLoader } from "../components/ui";
@@ -27,7 +27,6 @@ export function CreatureDetailPage() {
   const [variations, setVariations] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState<"delete" | "duplicate" | null>(null);
-  const [view, setView] = useState<"summary" | "full">("summary");
   const [chapter, setChapter] = useState<"mechanics" | "story">("mechanics");
 
   useEffect(() => {
@@ -120,54 +119,30 @@ export function CreatureDetailPage() {
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0 space-y-4">
-          <div role="tablist" aria-label="Visualização da criatura" className="flex gap-1 rounded-xl border border-line bg-cream p-1">
+          <div role="tablist" aria-label="Capítulos da criatura" className="flex gap-1 rounded-xl border border-line bg-cream p-1">
             {([
-              ["summary", "Resumo"], ["full", "Ficha completa"],
+              ["mechanics", "Ficha mecânica"], ["story", "Crônica & narrativa"],
             ] as const).map(([key, label]) => (
               <button
                 key={key}
-                id={`view-${key}`}
+                id={`chapter-${key}`}
                 type="button"
                 role="tab"
-                aria-selected={view === key}
-                aria-controls={`view-panel-${key}`}
-                tabIndex={view === key ? 0 : -1}
-                onClick={() => setView(key)}
-                className={`min-h-11 min-w-0 flex-1 rounded-lg px-3 py-2 text-sm cursor-pointer ${view === key ? "bg-wine-soft text-wine" : "text-muted hover:text-ink"}`}
+                aria-selected={chapter === key}
+                aria-controls={`panel-${key}`}
+                tabIndex={chapter === key ? 0 : -1}
+                onClick={() => setChapter(key)}
+                className={`min-h-11 min-w-0 flex-1 rounded-lg px-3 py-2 text-sm cursor-pointer ${chapter === key ? "bg-wine-soft text-wine" : "text-muted hover:text-ink"}`}
               >
                 {label}
               </button>
             ))}
           </div>
-          <div id="view-panel-summary" role="tabpanel" aria-labelledby="view-summary" hidden={view !== "summary"} tabIndex={0}>
-            <CreatureOverview creature={draft} transitionName="creature-name" />
+          <div id="panel-mechanics" role="tabpanel" aria-labelledby="chapter-mechanics" hidden={chapter !== "mechanics"} tabIndex={0}>
+            <StatBlock creature={draft} transitionName="creature-name" />
           </div>
-          <div id="view-panel-full" role="tabpanel" aria-labelledby="view-full" hidden={view !== "full"} tabIndex={0}>
-            <div role="tablist" aria-label="Capítulos da criatura" className="mb-4 flex gap-1 rounded-xl border border-line bg-cream p-1">
-              {([
-                ["mechanics", "Ficha mecânica"], ["story", "Crônica & narrativa"],
-              ] as const).map(([key, label]) => (
-                <button
-                  key={key}
-                  id={`chapter-${key}`}
-                  type="button"
-                  role="tab"
-                  aria-selected={chapter === key}
-                  aria-controls={`panel-${key}`}
-                  tabIndex={chapter === key ? 0 : -1}
-                  onClick={() => setChapter(key)}
-                  className={`min-h-11 min-w-0 flex-1 rounded-lg px-3 py-2 text-sm cursor-pointer ${chapter === key ? "bg-wine-soft text-wine" : "text-muted hover:text-ink"}`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <div id="panel-mechanics" role="tabpanel" aria-labelledby="chapter-mechanics" hidden={chapter !== "mechanics"} tabIndex={0}>
-              <StatBlock creature={draft} transitionName="creature-name" />
-            </div>
-            <div id="panel-story" role="tabpanel" aria-labelledby="chapter-story" hidden={chapter !== "story"} tabIndex={0}>
-              <Narrative creature={draft} />
-            </div>
+          <div id="panel-story" role="tabpanel" aria-labelledby="chapter-story" hidden={chapter !== "story"} tabIndex={0}>
+            <Narrative creature={draft} />
           </div>
         </div>
         <div className="side-panel order-first mx-auto w-full max-w-md xl:order-none xl:max-w-none">
