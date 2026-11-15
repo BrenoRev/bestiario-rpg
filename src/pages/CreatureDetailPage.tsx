@@ -132,14 +132,7 @@ export function CreatureDetailPage() {
                 aria-controls={`panel-${key}`}
                 tabIndex={chapter === key ? 0 : -1}
                 onClick={() => setChapter(key)}
-                onKeyDown={(e) => {
-                  if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
-                  e.preventDefault();
-                  const next = e.key === "Home" ? "mechanics" : e.key === "End" ? "story" : key === "mechanics" ? "story" : "mechanics";
-                  setChapter(next);
-                  document.getElementById(`chapter-${next}`)?.focus();
-                }}
-                className={`min-h-11 min-w-0 flex-1 rounded-lg px-3 py-2 text-sm cursor-pointer ${chapter === key ? "bg-gold/10 text-gold" : "text-muted hover:text-ink"}`}
+                className={`min-h-11 min-w-0 flex-1 rounded-lg px-3 py-2 text-sm cursor-pointer ${chapter === key ? "bg-wine-soft text-wine" : "text-muted hover:text-ink"}`}
               >
                 {label}
               </button>
