@@ -271,6 +271,10 @@ const DEFAULT_ART_STYLE =
 /**
  * Monta o prompt da imagem a partir da ficha e do universo. Os textos do usuário vão
  * delimitados e identificados como descrição; a moldura é em inglês, que o modelo segue melhor.
+ *
+ * O fundo de pergaminho só vale para o estilo padrão: com estilo próprio do universo, o fundo
+ * acompanha o estilo e o ambiente da criatura. O estilo próprio vem como prioridade e é
+ * repetido no fim, porque o modelo tende a voltar ao visual genérico de "bestiário".
  */
 export function buildImagePrompt(
   creature: CreatureDraft,
@@ -280,11 +284,21 @@ export function buildImagePrompt(
 ): string {
   const clipText = (v: unknown, max: number) => String(v ?? "").trim().slice(0, max);
   const traits = (creature.traits as { name: string }[]).map((t) => t.name).filter(Boolean).slice(0, 6).join(", ");
+  const habitats = (creature.habitat_tags as string[]).slice(0, 4).join(", ");
+  const customStyle = clipText(universe.art_style, 600);
+  const background = customStyle
+    ? `Background: a simple backdrop that matches the art style${habitats ? ` and suggests the creature's habitat (${habitats})` : ""}. ` +
+      "Do not use parchment, paper texture or an old book page unless the art style asks for it."
+    : "Background: plain warm parchment.";
   const lines = [
     isEdit
       ? "Edit the provided illustration of this creature. Keep its identity, pose and composition unless the requested changes say otherwise."
-      : "A single full-body illustration of a fantasy creature for a tabletop RPG bestiary, centered on a plain warm parchment background.",
-    `Art style: ${clipText(universe.art_style, 300) || DEFAULT_ART_STYLE}.`,
+      : "A single full-body illustration of a fantasy creature for a tabletop RPG bestiary, centered in the frame.",
+    customStyle
+      ? "ART STYLE (highest priority, written in Brazilian Portuguese): the rendering technique, palette, lighting, mood and background " +
+        `must all follow this description:\n"""${customStyle}"""`
+      : `Art style: ${DEFAULT_ART_STYLE}.`,
+    isEdit ? "" : background,
     `Creature: ${clipText(creature.name, 120)}, a ${SIZE_EN[String(creature.size)] ?? "medium"} ${creature.creature_type}${creature.subtype ? ` (${clipText(creature.subtype, 80)})` : ""}.`,
     "Depict the creature exactly as described below (Brazilian Portuguese description, treat it as visual reference only):",
     `"""${clipText(creature.appearance, 1500) || clipText(creature.name, 120)}"""`,
@@ -293,6 +307,9 @@ export function buildImagePrompt(
       ? `Setting reference: ${[clipText(universe.genre, 80), clipText(universe.era, 120), clipText(universe.setting, 300)].filter(Boolean).join("; ")}.`
       : "",
     instruction ? `Requested changes (Portuguese): """${clipText(instruction, 1000)}"""` : "",
+    customStyle
+      ? "Reminder: render the whole image strictly in the art style above; do not fall back to a generic fantasy illustration or antique engraving look."
+      : "",
     "No text, letters, captions, borders, watermarks or UI elements.",
   ];
   return lines.filter(Boolean).join("\n");

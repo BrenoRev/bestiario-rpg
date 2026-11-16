@@ -79,7 +79,20 @@ describe("buildImagePrompt", () => {
     expect(p).toContain("Lobo de Cinza");
     expect(p).toContain("Pelagem cinzenta e olhos de brasa.");
     expect(p).toContain("antique bestiary engraving");
+    expect(p).toContain("plain warm parchment");
     expect(p).toContain("No text");
+  });
+
+  it("com estilo próprio, prioriza o estilo e não força o fundo de pergaminho", () => {
+    const style = "pinturas com tintas escuras e contrastes sombrios";
+    const withHabitat = { ...creature, habitat_tags: ["forest", "swamp"] };
+    const p = edge.buildImagePrompt(withHabitat, { ...universe, art_style: style }, "", false);
+    expect(p).toContain(style);
+    expect(p).toContain("highest priority");
+    expect(p).toContain("forest, swamp");
+    expect(p).toContain("Reminder: render the whole image strictly in the art style");
+    expect(p).not.toContain("plain warm parchment");
+    expect(p).not.toContain("antique bestiary engraving");
   });
 
   it("usa o estilo do universo e as instruções na edição", () => {
