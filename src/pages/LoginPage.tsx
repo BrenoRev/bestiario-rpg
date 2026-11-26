@@ -1,6 +1,6 @@
 import { LockKeyhole, LogIn, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router";
+import { Link, Navigate, useLocation, useNavigate } from "react-router";
 import { GoogleIcon, Logo } from "../components/brand";
 import { errorMessage } from "../components/Toast";
 import { Button, Segmented, TextInput } from "../components/ui";
@@ -170,6 +170,14 @@ export function LoginPage() {
             Seus universos e criaturas ficam visíveis apenas para você.
           </p>
           <p className="mt-10 text-center text-xs text-muted">Feito para imaginar. Organizado para jogar.</p>
+          <nav className="mt-2 flex justify-center gap-5 text-xs text-muted" aria-label="Documentos">
+            <Link to="/privacidade" className="inline-flex min-h-11 items-center underline-offset-2 hover:text-ink hover:underline">
+              Política de privacidade
+            </Link>
+            <Link to="/termos" className="inline-flex min-h-11 items-center underline-offset-2 hover:text-ink hover:underline">
+              Termos de uso
+            </Link>
+          </nav>
         </div>
       </main>
     </div>
