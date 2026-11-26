@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Compass, TriangleAlert } from "lucide-react";
-import type { ComponentType } from "react";
-import { lazy } from "react";
+import type { ComponentType, ReactNode } from "react";
+import { lazy, Suspense } from "react";
 import { createBrowserRouter, Link, Navigate, Outlet, RouterProvider, useLocation, useParams, useRouteError } from "react-router";
 import { Logo } from "./components/brand";
 import { AppLayout } from "./components/layout/AppLayout";
@@ -26,6 +26,8 @@ const CreatureDetailPage = page(() => import("./pages/CreatureDetailPage"), "Cre
 const CreatureEditorPage = page(() => import("./pages/CreatureEditorPage"), "CreatureEditorPage");
 const CreateWithAIPage = page(() => import("./pages/CreateWithAIPage"), "CreateWithAIPage");
 const SettingsPage = page(() => import("./pages/SettingsPage"), "SettingsPage");
+const PrivacyPage = page(() => import("./pages/PrivacyPage"), "PrivacyPage");
+const TermsPage = page(() => import("./pages/TermsPage"), "TermsPage");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,6 +64,21 @@ function RequireAuth() {
         <AppLayout />
       </HelpProvider>
     </UniverseProvider>
+  );
+}
+
+/** Página pública (sem login e sem AppLayout): carrega sob demanda com o próprio indicador. */
+function PublicPage({ children }: { children: ReactNode }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <PageLoader />
+        </div>
+      }
+    >
+      {children}
+    </Suspense>
   );
 }
 
@@ -117,6 +134,9 @@ const router = createBrowserRouter([
     errorElement: <RouteError />,
     children: [
       { path: "/login", element: <LoginPage /> },
+      // Abertas sem login: o Google exige os links na tela de consentimento.
+      { path: "/privacidade", element: <PublicPage><PrivacyPage /></PublicPage> },
+      { path: "/termos", element: <PublicPage><TermsPage /></PublicPage> },
       {
         element: <RequireAuth />,
         children: [
