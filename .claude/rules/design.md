@@ -31,6 +31,7 @@ Marca oficial fornecida pelo usuário: `public/logo-bestiario.png` é a logo com
 - Nos formulários de criação e edição de universos e criaturas e no pedido de “Criar com IA”, combine `.paper-surface` com `.parchment-form`: a imagem definitiva fornecida pelo usuário em `public/parchment-vintage.png` cobre cada seção proporcionalmente. Os painéis de pergaminho não têm borda externa; os contornos dos controles são preservados. A referência `bestiario_pergaminho_exemplo.png` orienta os controles: vidro quente translúcido com desfoque discreto, contornos em sépia, texto serifado marrom, títulos em vinho e seleção carmim com borda dourada. Os tokens `form-*` e as regras escopadas em `@layer utilities` ficam em `src/index.css`. O pedido de IA usa `.ai-creation-form` para empilhar as opções de criatividade e detalhamento abaixo de 480 px, preservando a leitura dos rótulos. Não substitua a imagem de fundo ao ajustar controles. Fichas de leitura e verbetes usam o pergaminho padrão.
 - `TextInput` e `TextArea` aceitam `icon` decorativo opcional; `Segmented.options` também aceita `icon`. Rótulos continuam ligados ao campo e os ícones não participam do nome acessível. `Button` expõe `data-variant` para o acabamento contextual. Números preservam a fonte de interface e algarismos tabulares; menus nativos de opções têm fundo opaco para leitura. Preserve os estados de foco, seleção e desabilitado.
 - Cor nova só com aprovação, e entra como token em `@theme`. Nenhuma cor fica fora dos tokens.
+- `google-blue`, `google-green`, `google-yellow` e `google-red` existem só para o "G" do botão de login (`GoogleIcon` em `brand.tsx`). Não use em outro lugar.
 - Classes prontas: `.card`, `.field`, `.label`, `.hint`, `.section-title`, `.stat-rule`, `.stat-heading`, `.skeleton`, `.ornate`, `.drop-cap`, `.glint`, e as de movimento (seção abaixo).
 - Sombras: `shadow-[var(--shadow-soft)]` (repouso) e `shadow-[var(--shadow-pop)]` (menus, modais, hover de cartão).
 - Cantos: `--radius-ui` (12 px) em controles, `--radius-card` (18 px) em cartões e `--radius-paper` (6 px) em documentos. `.card.paper-surface` aplica os cantos e o material de papel.
@@ -76,7 +77,7 @@ Marca oficial fornecida pelo usuário: `public/logo-bestiario.png` é a logo com
 
 ## Ícones, layout e acessibilidade
 
-- Ícones só do `lucide-react`: `size-4` em botões, `size-[1.1rem]` na navegação, `size-6` em estados vazios. Exceção: as marcas desenhadas de `brand.tsx` (`Logo`, `D20`, `WaxSeal`).
+- Ícones só do `lucide-react`: `size-4` em botões, `size-[1.1rem]` na navegação, `size-6` em estados vazios. Exceção: as marcas desenhadas de `brand.tsx` (`Logo`, `D20`, `WaxSeal`) e a marca do Google (`GoogleIcon`, com os tokens `google-*`).
 - Mobile primeiro: grades `sm:grid-cols-2 lg:grid-cols-3`, nada de rolagem horizontal a 390 px. Largura máxima e margens já vêm do `AppLayout`.
 - Painel lateral em tela de detalhe/edição: `xl:grid-cols-[minmax(0,1fr)_21rem]` com a classe `.side-panel` (fixo a partir de 1280 px e com rolagem própria quando passa da altura da janela). Antes disso, preserve a largura do formulário com uma coluna. Se a tela tiver barra fixa embaixo, ajuste `[--side-panel-offset:…]` (veja `CreatureEditorPage`). Não use `sticky` puro em painel que pode crescer.
 - Carregamento: `PageLoader` para a página, `.skeleton` para cartões, `loading` no botão que disparou a ação.

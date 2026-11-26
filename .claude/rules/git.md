@@ -41,7 +41,7 @@ Exemplos:
 - `docs: cria regras de padronização para agentes de IA`
 
 - Um commit = uma mudança lógica. A migração vai no mesmo commit do código que a usa.
-- Nunca commite `.env`, `.env.local`, `supabase/functions/.env`, `dist/` ou `node_modules/`.
+- Nunca commite `.env`, `.env.local`, `supabase/.env`, `supabase/functions/.env`, `dist/` ou `node_modules/`.
 
 ## Pull Requests
 

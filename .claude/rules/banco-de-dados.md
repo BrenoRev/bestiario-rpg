@@ -84,4 +84,5 @@ create policy "exemplos_delete_own" on public.exemplos
 
 - Cadastro e login por e-mail e senha no Supabase Auth. `config.toml`: `[auth.email] enabled = true`, `enable_confirmations = false`, `secure_password_change = true`, `double_confirm_changes = true`; `[auth] minimum_password_length = 6`, `password_requirements = "letters_digits"`. Produção usa a mesma política; se mudar lá, mude aqui e em `passwordProblem` (`AuthContext.tsx`).
 - O nome do cadastro vai em `options.data.full_name` no `signUp`; o perfil nasce pelo trigger `on_auth_user_created` → `handle_new_user`. Não crie perfil pelo app.
-- Sem provedores OAuth, salvo pedido explícito.
+- Google: `[auth.external.google]` no `config.toml`, com `client_id` e `secret` lidos de `supabase/.env` (modelo em `supabase/.env.example`; sem o arquivo o Supabase local sobe, só o Google recusa). Em produção, o provedor e as chaves ficam no painel do Supabase (*Authentication → Providers → Google*), não neste arquivo. O perfil do usuário do Google nasce pelo mesmo trigger, que lê `name`/`full_name` e `picture`/`avatar_url`.
+- Nenhum outro provedor OAuth, salvo pedido explícito.

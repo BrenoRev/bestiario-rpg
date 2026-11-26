@@ -63,6 +63,12 @@
   --color-amber-line: var(--color-wine-line);
   --color-focus: var(--color-gold);
 
+  /* Cores da marca do Google, só para o ícone do botão "Continuar com Google". */
+  --color-google-blue: #4285f4;
+  --color-google-green: #34a853;
+  --color-google-yellow: #fbbc05;
+  --color-google-red: #ea4335;
+
   --font-display: "Alegreya", Georgia, "Times New Roman", serif;
   --font-sans: "Alegreya Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 

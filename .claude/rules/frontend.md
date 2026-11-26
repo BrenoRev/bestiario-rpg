@@ -7,7 +7,7 @@ paths:
 
 ## Páginas
 
-- Uma tela por arquivo em `src/pages/NomePage.tsx`, registrada em `src/App.tsx` com carregamento sob demanda (`const NomePage = page(() => import("./pages/NomePage"), "NomePage")`). Só login e retorno do OAuth são importados direto. Telas de usuário logado são filhas de `RequireAuth`, que já entrega `UniverseProvider` e `AppLayout` (barra lateral, topo, largura máxima). Não crie outro layout.
+- Uma tela por arquivo em `src/pages/NomePage.tsx`, registrada em `src/App.tsx` com carregamento sob demanda (`const NomePage = page(() => import("./pages/NomePage"), "NomePage")`). Só a tela de login é importada direto (ela também recebe a volta do Google). Telas de usuário logado são filhas de `RequireAuth`, que já entrega `UniverseProvider` e `AppLayout` (barra lateral, topo, largura máxima). Não crie outro layout.
 - Item novo na barra lateral só com pedido explícito. A navegação principal é: Meus Mundos, Criaturas, Criar com IA, Configurações.
 - Estrutura de toda tela:
 

@@ -43,7 +43,7 @@ As regras por tema ficam em `.claude/rules/`. As marcadas "sempre" carregam em t
 - Aplicar sugestão da IA sem revisão do usuário, deixar a IA alterar `notes` ou `image_path`, ou gerar imagem sem clique explícito.
 - Adicionar outro provedor de IA além da OpenAI e da Anthropic temporária, ou fixar modelo no código. Os modelos vêm das variáveis de ambiente.
 - Cor em hex, fonte ou sombra fora de `src/index.css`.
-- Adicionar login social / OAuth ou outro método de autenticação.
+- Adicionar outro método de autenticação além de e-mail e senha e do Google (outro provedor social, link mágico, telefone…).
 - Texto de interface em inglês, `alert()`, `confirm()` ou `prompt()`.
 
 ## Stack (fixa)
@@ -51,7 +51,7 @@ As regras por tema ficam em `.claude/rules/`. As marcadas "sempre" carregam em t
 | Camada | Tecnologia |
 |---|---|
 | Frontend | React 19, TypeScript estrito, Vite, Tailwind CSS 4, React Router 7 (data router), TanStack Query 5, lucide-react |
-| Auth | Supabase Auth com e-mail e senha (cadastro e login básicos, sem OAuth) |
+| Auth | Supabase Auth com e-mail e senha e com Google (OAuth, fluxo PKCE, volta para `/login`) |
 | Banco | Supabase Postgres com RLS em todas as tabelas |
 | Arquivos | Supabase Storage, bucket privado `bestiario`, URLs assinadas |
 | IA | OpenAI, via Edge Functions em Deno: Responses API (texto com saída JSON estruturada) e Image API (ilustração), com cota diária por usuário. **Temporário:** sem chave da OpenAI, o texto usa o Claude (Anthropic) |
@@ -87,6 +87,7 @@ supabase/
   functions/        _shared/ (auth, http, claude, esquema da ficha) + uma pasta por função
   config.toml       ambiente local
 vercel.json         deploy do frontend (reescrita SPA, cabeçalhos, cache)
+docs/prints/        prints das telas usados no README (JPEG, refaça quando a tela mudar)
 ```
 
 ## Onde está o modelo (copie daqui)

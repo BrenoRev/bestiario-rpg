@@ -15,6 +15,27 @@ export function passwordProblem(password: string): string | null {
   return null;
 }
 
+/**
+ * Lê o retorno do login com Google (a página /login, para onde o Google devolve).
+ * Devolve a mensagem de erro a mostrar, ou null quando não há erro na URL.
+ * O Supabase manda o erro em ?error=… ou em #error=…; um ?code= que sobrou depois
+ * da troca (código vencido ou aberto em outro navegador) também é falha.
+ */
+export function oauthReturnProblem(search: string, hash: string, signedIn: boolean): string | null {
+  const query = new URLSearchParams(search);
+  const fragment = new URLSearchParams(hash.replace(/^#/, ""));
+  const read = (key: string) => query.get(key) ?? fragment.get(key);
+  const error = read("error");
+  const code = read("error_code");
+  if (error || code) {
+    if (code === "signup_disabled") return "Novos cadastros estão desativados no momento.";
+    if (error === "access_denied") return "Login com Google cancelado.";
+    return "Não foi possível entrar com o Google. Tente novamente.";
+  }
+  if (query.has("code") && !signedIn) return "Não foi possível concluir o login com Google. Tente novamente neste mesmo navegador.";
+  return null;
+}
+
 interface SignUpResult {
   /** false quando o projeto exige confirmação por e-mail antes do primeiro login. */
   signedIn: boolean;
@@ -26,6 +47,8 @@ interface AuthState {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<SignUpResult>;
+  /** Redireciona para o Google; a volta cai em /login, que conclui ou mostra o erro. */
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -38,7 +61,7 @@ function authMessage(error: AuthError): string {
       return "E-mail ou senha incorretos.";
     case "user_already_exists":
     case "email_exists":
-      return "Já existe uma conta com este e-mail. Entre com sua senha.";
+      return "Já existe uma conta com este e-mail. Entre com sua senha ou com o Google.";
     case "weak_password":
       return `Escolha uma senha mais forte: ${PASSWORD_RULE.toLowerCase()}`;
     case "email_address_invalid":
@@ -92,6 +115,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         if (error) throw new Error(authMessage(error));
         return { signedIn: !!data.session };
+      },
+      async signInWithGoogle() {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: `${window.location.origin}/login`,
+            // Deixa escolher a conta (útil em computador compartilhado).
+            queryParams: { prompt: "select_account" },
+          },
+        });
+        if (error) throw new Error(authMessage(error));
       },
       async signOut() {
         await supabase.auth.signOut();
