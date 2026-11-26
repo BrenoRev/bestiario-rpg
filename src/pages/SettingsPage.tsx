@@ -22,6 +22,12 @@ export function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [confirmOut, setConfirmOut] = useState(false);
   const { openGuide, openGlossary } = useHelp();
+  const providers = (user?.app_metadata?.providers as string[] | undefined) ?? [];
+  const signInWay = providers.includes("google")
+    ? providers.includes("email")
+      ? "com o Google ou com e-mail e senha"
+      : "com sua conta Google"
+    : "com e-mail e senha";
 
   useEffect(() => {
     if (!profile) return;
@@ -72,7 +78,7 @@ export function SettingsPage() {
           <div className="mt-5 flex items-start gap-3 rounded-lg border border-line bg-parchment px-4 py-3 text-xs leading-relaxed text-ink-soft">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-moss" />
             <p>
-              Você entra com e-mail e senha. Seus universos, criaturas e imagens ficam protegidos por políticas de acesso no banco de dados: só a sua conta consegue vê-los ou alterá-los.
+              Você entra {signInWay}. Seus universos, criaturas e imagens ficam protegidos por políticas de acesso no banco de dados: só a sua conta consegue vê-los ou alterá-los.
             </p>
           </div>
           <Button className="mt-5" variant="danger" icon={<LogOut className="size-4" />} onClick={() => setConfirmOut(true)}>
@@ -124,7 +130,7 @@ export function SettingsPage() {
       <ConfirmDialog
         open={confirmOut}
         title="Sair da conta?"
-        message="Você precisará entrar novamente com seu e-mail e senha para acessar seus mundos."
+        message={`Para acessar seus mundos de novo, entre ${signInWay}.`}
         confirmLabel="Sair"
         onConfirm={() => void signOut()}
         onClose={() => setConfirmOut(false)}

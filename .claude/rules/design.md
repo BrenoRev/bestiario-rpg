@@ -26,6 +26,7 @@ Identidade: bestiário antigo, mas limpo e legível. Papel envelhecido, pergamin
 
 - **Cores, só por token**: `paper` (fundo), `parchment` e `cream` (superfícies), `sand`, `line` e `line-strong` (bordas), `ink`, `ink-soft` e `muted` (texto), `wine`, `wine-dark`, `wine-soft`, `wine-line` e `wine-tint` (destaque), `moss`, `moss-soft` e `moss-line` (positivo, ambientes), `amber`, `amber-soft` e `amber-line` (atenção). Ex.: `bg-cream`, `text-wine`, `border-line`, `bg-ink/40`.
 - Cor nova só com aprovação, e entra como token em `@theme`. Nenhuma cor fica fora dos tokens.
+- `google-blue`, `google-green`, `google-yellow` e `google-red` existem só para o "G" do botão de login (`GoogleIcon` em `brand.tsx`). Não use em outro lugar.
 - Classes prontas: `.card`, `.field`, `.label`, `.hint`, `.section-title`, `.stat-rule`, `.stat-heading`, `.skeleton`, `.animate-fade-in`.
 - Sombras: `shadow-[var(--shadow-soft)]` (repouso) e `shadow-[var(--shadow-pop)]` (menus, modais, hover de cartão).
 - Cantos: `rounded-lg` em controles; `.card` ou `rounded-[var(--radius-card)]` em cartões.
@@ -58,7 +59,7 @@ Identidade: bestiário antigo, mas limpo e legível. Papel envelhecido, pergamin
 
 ## Ícones, layout e acessibilidade
 
-- Ícones só do `lucide-react`: `size-4` em botões, `size-[1.1rem]` na navegação, `size-6` em estados vazios.
+- Ícones só do `lucide-react` (única exceção: a marca do Google, `GoogleIcon`): `size-4` em botões, `size-[1.1rem]` na navegação, `size-6` em estados vazios.
 - Mobile primeiro: grades `sm:grid-cols-2 lg:grid-cols-3`, nada de rolagem horizontal a 390 px. Largura máxima e margens já vêm do `AppLayout`.
 - Painel lateral em tela de detalhe/edição: `lg:grid-cols-[minmax(0,1fr)_21rem]` com a classe `.side-panel` (fixo no desktop e com rolagem própria quando passa da altura da janela). Se a tela tiver barra fixa embaixo, ajuste `[--side-panel-offset:…]` (veja `CreatureEditorPage`). Não use `sticky` puro em painel que pode crescer.
 - Carregamento: `PageLoader` para a página, `.skeleton` para cartões, `loading` no botão que disparou a ação.

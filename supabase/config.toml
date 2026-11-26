@@ -23,7 +23,8 @@ file_size_limit = "10MiB"
 [auth]
 enabled = true
 site_url = "http://localhost:5173"
-additional_redirect_urls = ["http://127.0.0.1:5173"]
+# O login com Google volta para /login. Endereços no host do site_url já são aceitos.
+additional_redirect_urls = ["http://127.0.0.1:5173/**"]
 jwt_expiry = 3600
 enable_signup = true
 # Mesma política do projeto de produção: mínimo de 6 caracteres, com letras e números
@@ -38,6 +39,13 @@ enable_confirmations = false
 # Troca de e-mail e de senha protegidas, como em produção.
 double_confirm_changes = true
 secure_password_change = true
+
+[auth.external.google]
+# Login com Google. As credenciais vêm de supabase/.env (veja supabase/.env.example);
+# sem elas o Supabase local sobe normalmente, só o botão do Google não funciona.
+enabled = true
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
 
 [edge_runtime]
 enabled = true

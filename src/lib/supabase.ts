@@ -10,6 +10,9 @@ export const supabase = createClient(url ?? "http://localhost:54321", anonKey ??
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    // PKCE: o retorno do Google traz um código de uso único em ?code=, trocado pela
+    // sessão neste navegador (os tokens nunca aparecem na URL).
+    flowType: "pkce",
   },
 });
 

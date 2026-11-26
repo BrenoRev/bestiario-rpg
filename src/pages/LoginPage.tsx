@@ -1,10 +1,10 @@
 import { BookOpen, Globe2, LogIn, Sparkles, UserPlus } from "lucide-react";
-import { useState } from "react";
-import { Navigate, useLocation } from "react-router";
-import { Logo } from "../components/brand";
+import { useEffect, useState } from "react";
+import { Navigate, useLocation, useNavigate } from "react-router";
+import { GoogleIcon, Logo } from "../components/brand";
 import { errorMessage } from "../components/Toast";
 import { Button, Segmented, TextInput } from "../components/ui";
-import { PASSWORD_RULE, passwordProblem, useAuth } from "../context/AuthContext";
+import { oauthReturnProblem, PASSWORD_RULE, passwordProblem, useAuth } from "../context/AuthContext";
 
 const FEATURES = [
   { icon: Globe2, title: "Um bestiário por mundo", text: "Organize criaturas por universo e campanha." },
@@ -15,8 +15,9 @@ const FEATURES = [
 type Mode = "entrar" | "criar";
 
 export function LoginPage() {
-  const { user, loading, signIn, signUp } = useAuth();
+  const { user, loading, signIn, signUp, signInWithGoogle } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const from = (location.state as { from?: string } | null)?.from ?? "/";
   const [mode, setMode] = useState<Mode>("entrar");
   const [name, setName] = useState("");
@@ -25,8 +26,31 @@ export function LoginPage() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
+
+  // Volta do Google: com sessão, o Navigate abaixo leva ao app; com erro, mostra a
+  // mensagem e limpa a URL (para não repetir o aviso ao recarregar).
+  useEffect(() => {
+    if (loading) return;
+    const problem = oauthReturnProblem(location.search, location.hash, !!user);
+    if (!problem) return;
+    setError(problem);
+    navigate("/login", { replace: true });
+  }, [loading, user, location.search, location.hash, navigate]);
 
   if (!loading && user) return <Navigate to={from} replace />;
+
+  const google = async () => {
+    setError(null);
+    setNotice(null);
+    setRedirecting(true);
+    try {
+      await signInWithGoogle(); // sai do app e volta para /login
+    } catch (err) {
+      setError(errorMessage(err));
+      setRedirecting(false);
+    }
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,7 +139,16 @@ export function LoginPage() {
             />
           </div>
 
-          <form onSubmit={submit} className="mt-6 space-y-4" noValidate>
+          <Button className="mt-6 h-11 w-full" icon={<GoogleIcon className="size-[1.1rem]" />} onClick={google} loading={redirecting || loading} disabled={pending}>
+            Continuar com Google
+          </Button>
+          <div className="my-5 flex items-center gap-3 text-xs text-muted" aria-hidden>
+            <span className="h-px flex-1 bg-line" />
+            ou com e-mail
+            <span className="h-px flex-1 bg-line" />
+          </div>
+
+          <form onSubmit={submit} className="space-y-4" noValidate>
             {mode === "criar" && (
               <TextInput label="Nome" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} placeholder="Ex.: Mestre Ana" />
             )}
@@ -145,6 +178,7 @@ export function LoginPage() {
               variant="primary"
               className="h-11 w-full"
               loading={pending || loading}
+              disabled={redirecting}
               icon={mode === "entrar" ? <LogIn className="size-4" /> : <UserPlus className="size-4" />}
             >
               {mode === "entrar" ? "Entrar" : "Criar conta"}

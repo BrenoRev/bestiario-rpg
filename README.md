@@ -4,7 +4,7 @@ Plataforma web para mestres de RPG criarem e organizarem bestiários por univers
 
 ## Funcionalidades
 
-- **Cadastro e login com e-mail e senha** (Supabase Auth). Senha com pelo menos 6 caracteres, com letras e números, e mensagens de erro em português.
+- **Login com Google ou com e-mail e senha** (Supabase Auth). Senha com pelo menos 6 caracteres, com letras e números, e mensagens de erro em português.
 - **Meus Mundos**: universos com capa, gênero, ambientação, época, nível de fantasia, regras particulares e estilo visual. Cada um tem o próprio bestiário.
 - **Criaturas**: grade com busca por nome, filtros por categoria, habitat e nível de ameaça, e ordenação (A–Z, Z–A, ND, recentes).
 - **Ficha D&D 5e completa**:
@@ -24,7 +24,7 @@ Plataforma web para mestres de RPG criarem e organizarem bestiários por univers
 | Camada | Tecnologia |
 |---|---|
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, React Router 7, TanStack Query, lucide-react |
-| Autenticação | Supabase Auth com e-mail e senha |
+| Autenticação | Supabase Auth com e-mail e senha e com Google (OAuth com PKCE) |
 | Banco de dados | Supabase Postgres com Row Level Security |
 | Arquivos | Supabase Storage (bucket privado `bestiario`, URLs assinadas) |
 | IA (texto) | OpenAI Responses API (`gpt-6.1-sol` por padrão), via Edge Function `ai-creature`, com saída JSON estruturada estrita. **Temporário:** sem chave da OpenAI, usa o Claude (`claude-opus-5-5`, Anthropic) |
@@ -36,7 +36,7 @@ flowchart LR
     UI[React + TanStack Query]
   end
   subgraph Supabase
-    Auth[Auth - e-mail e senha]
+    Auth[Auth - Google e e-mail]
     DB[(Postgres + RLS)]
     ST[(Storage privado)]
     F1[ai-creature]
@@ -70,7 +70,7 @@ flowchart LR
 src/
   pages/           telas (carregadas sob demanda, uma por rota)
   components/      UI reutilizável, layout, ficha, editor, IA, imagens, universo
-  context/         sessão (e-mail e senha) e universo atual
+  context/         sessão (Google e e-mail e senha) e universo atual
   hooks/queries.ts consultas com TanStack Query
   lib/             tipos, regras de D&D 5e, acesso a dados, cliente de IA, testes
 supabase/
@@ -113,10 +113,24 @@ npx supabase db push            # aplica supabase/migrations
 
 No painel do Supabase, em **Authentication → Sign In / Providers → Email**:
 1. Provedor **Email** ativo, com cadastro permitido.
-2. **Confirm email** desligado para o fluxo básico (a conta entra logada logo após o cadastro). Se preferir manter a confirmação, o app já avisa o usuário para confirmar pelo link antes de entrar.
+2. **Confirm email** **ligado**. Com o login do Google ativo, isso é obrigatório: o Supabase junta na mesma conta o Google e o e-mail e senha com o mesmo endereço verificado, e sem confirmação alguém poderia cadastrar o e-mail de outra pessoa e herdar a conta dela. O app já avisa o usuário para confirmar pelo link antes de entrar.
 3. Senha mínima de **6 caracteres** com **letras e números** (o app valida o mesmo antes de enviar).
 4. **Secure password change**, **Secure email change** e **Require current password when updating** ativos.
-5. Em **Authentication → URL Configuration**, defina o *Site URL* com a URL do app.
+5. Em **Authentication → URL Configuration**, defina o *Site URL* com a URL do app e inclua `http://localhost:5173/**` em *Redirect URLs* para testar o Google localmente contra o projeto.
+
+#### Login com Google
+
+1. No [Google Cloud Console](https://console.cloud.google.com), em **Google Auth Platform**:
+   - **Branding**: nome do app (Bestiario), e-mail de suporte e o domínio do site.
+   - **Audience**: tipo *External*. Enquanto o app estiver em *Testing*, só os e-mails listados em *Test users* conseguem entrar; publique o app para liberar a todos (os escopos `email` e `profile` não exigem verificação do Google).
+   - **Clients → Create client**: tipo *Web application*.
+     - *Authorized JavaScript origins*: a URL do app (ex.: `https://bestiario-rpg.vercel.app`) e `http://localhost:5173`.
+     - *Authorized redirect URIs*: o callback do Supabase, `https://SEU_PROJECT_REF.supabase.co/auth/v1/callback` (o painel do Supabase mostra o endereço exato na tela do provedor Google). Para o Supabase local, inclua também `http://127.0.0.1:54321/auth/v1/callback`.
+2. Copie o *Client ID* e o *Client secret*.
+3. No Supabase, em **Authentication → Sign In / Providers → Google**, ative o provedor e cole os dois valores.
+4. Teste em uma janela anônima: **Continuar com Google** → escolher a conta → volta para o app já logado, com nome e foto do Google.
+
+Faça esses passos **antes** de publicar o botão: sem o provedor ativo, o clique leva a uma página de erro do Supabase. Deploys de prévia da Vercel voltam do Google para o *Site URL* (produção), onde o login não conclui; para testar o Google numa prévia, inclua o endereço dela em *Redirect URLs*.
 
 ### 4. Edge Functions (IA)
 
@@ -159,7 +173,12 @@ O projeto já traz o `vercel.json`. Ele contém o preset Vite, o build em `dist/
 
 ### Desenvolvimento local com o Supabase CLI
 
-`supabase/config.toml` já vem com cadastro e login por e-mail e senha, sem confirmação de e-mail:
+`supabase/config.toml` já vem com cadastro e login por e-mail e senha, sem confirmação de e-mail (só no ambiente local), e com o provedor Google. Para o Google funcionar localmente, crie o arquivo de credenciais (ignorado pelo git) com o mesmo cliente do Google Cloud:
+
+```bash
+cp supabase/.env.example supabase/.env   # preencha o Client ID e o Client secret
+```
+
 
 ```bash
 npx supabase start                                    # Postgres, Auth, Storage, Edge Runtime (Docker)
