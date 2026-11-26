@@ -5,7 +5,7 @@ import { ArrowLeft, HelpCircle, Lightbulb, Save, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useBlocker, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { AIAssistModal } from "../components/creature/AIAssist";
-import { CreatureForm } from "../components/creature/CreatureForm";
+import { CreatureForm, type CreatureFormMode, type CreatureFormStep } from "../components/creature/CreatureForm";
 import { ImageStudio } from "../components/creature/ImageStudio";
 import { ConfirmDialog } from "../components/Modal";
 import { errorMessage, useToast } from "../components/Toast";
@@ -41,6 +41,8 @@ export function CreatureEditorPage() {
   const [universeId, setUniverseId] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [assist, setAssist] = useState(false);
+  const [formMode, setFormMode] = useState<CreatureFormMode>("steps");
+  const [formStep, setFormStep] = useState<CreatureFormStep>(1);
   const draftImages = useRef<CreatureImage[]>(incoming.images ?? []);
   const skipBlock = useRef(false);
 
@@ -93,6 +95,10 @@ export function CreatureEditorPage() {
       toast.error("Dê um nome à criatura antes de salvar.");
       return;
     }
+    if (!editing && !draft.appearance.trim()) {
+      toast.error("Conte como você imagina a criatura antes de salvar.");
+      return;
+    }
     if (!universeId) {
       toast.error("Escolha o universo da criatura.");
       return;
@@ -113,6 +119,16 @@ export function CreatureEditorPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const stepMode = !editing && formMode === "steps";
+
+  const nextStep = () => {
+    setFormStep((current) => (current < 5 ? (current + 1) as CreatureFormStep : current));
+  };
+
+  const previousStep = () => {
+    setFormStep((current) => (current > 1 ? (current - 1) as CreatureFormStep : current));
   };
 
   if (editing && isLoading) return <PageLoader />;
@@ -145,14 +161,23 @@ export function CreatureEditorPage() {
     </div>
   );
 
+  const modeToggle = !editing && (
+    <Button onClick={() => setFormMode((current) => (current === "steps" ? "full" : "steps"))}>
+      {stepMode ? "Ver ficha completa" : "Editar por etapas"}
+    </Button>
+  );
+
   const actions = (
     <>
       <Button icon={<Sparkles className="size-4" />} onClick={() => setAssist(true)} disabled={!universeId} aria-label="Assistente de IA" title="Assistente de IA">
         <span className="hidden sm:inline">Assistente de IA</span>
       </Button>
-      <Button variant="primary" icon={<Save className="size-4" />} onClick={save} loading={saving}>
-        {editing ? "Salvar ficha" : "Salvar no bestiário"}
-      </Button>
+      {(!stepMode || formStep === 5) && (
+        <Button variant="primary" icon={<Save className="size-4" />} onClick={save} loading={saving} aria-label={editing ? "Salvar ficha" : "Salvar no bestiário"}>
+          <span className="sm:hidden">Salvar ficha</span>
+          <span className="hidden sm:inline">{editing ? "Salvar ficha" : "Salvar no bestiário"}</span>
+        </Button>
+      )}
     </>
   );
 
@@ -163,14 +188,14 @@ export function CreatureEditorPage() {
       </button>
       <PageHeader
         title={editing ? `Editar ${creature?.name ?? "criatura"}` : incoming.draft ? "Revisar criatura sugerida" : "Nova criatura"}
-        description="Preencha a ficha no padrão de D&D 5e. Você pode pedir sugestões à IA a qualquer momento; nada é aplicado sem sua revisão."
-        actions={actions}
+        description={stepMode ? "Comece por onde preferir. Os detalhes de D&D são opcionais e podem ser preenchidos aos poucos." : "Preencha a ficha no padrão de D&D 5e. Você pode pedir sugestões à IA a qualquer momento; nada é aplicado sem sua revisão."}
+        actions={<>{modeToggle}{actions}</>}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
         <div className="min-w-0 space-y-5">
           {/* No celular a escolha do universo vem antes da ficha (no desktop fica no painel lateral). */}
-          {!editing && universeSelect("card p-4 lg:hidden")}
+          {!editing && universeSelect("card p-4 xl:hidden")}
           {!editing && !incoming.draft && showHelp && (
             <div className="flex gap-3 rounded-[var(--radius-card)] border border-wine-line bg-wine-soft/60 px-4 py-3.5 text-sm leading-relaxed text-ink-soft">
               <Lightbulb className="mt-0.5 size-5 shrink-0 text-wine" />
@@ -181,11 +206,11 @@ export function CreatureEditorPage() {
               </p>
             </div>
           )}
-          <CreatureForm value={draft} onChange={setDraft} />
+          <CreatureForm value={draft} onChange={setDraft} mode={stepMode ? "steps" : "full"} step={formStep} onStepChange={setFormStep} />
         </div>
 
         <aside className="side-panel space-y-4 [--side-panel-offset:12rem]">
-          {!editing && universeSelect("card hidden p-4 lg:block")}
+          {!editing && universeSelect("card hidden p-4 xl:block")}
           {universeId && (
             <ImageStudio
               universeId={universeId}
@@ -201,10 +226,23 @@ export function CreatureEditorPage() {
         </aside>
       </div>
 
-      <div className="sticky bottom-0 z-10 -mx-4 mt-8 flex justify-end gap-2 border-t border-line bg-paper/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <div className="editor-actions sticky z-10 -mx-4 mt-8 flex items-center justify-end gap-2 border-t border-line bg-paper/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+        {dirty && <span className="mr-auto hidden text-xs text-amber md:block">Alterações não salvas</span>}
         <Button onClick={() => navigate(-1)} disabled={saving}>
           Cancelar
         </Button>
+        {stepMode && (
+          <>
+            <Button onClick={previousStep} disabled={saving || formStep === 1}>
+              Voltar
+            </Button>
+            {formStep < 5 && (
+              <Button variant="primary" onClick={nextStep} disabled={saving}>
+                Próxima etapa
+              </Button>
+            )}
+          </>
+        )}
         {actions}
       </div>
 

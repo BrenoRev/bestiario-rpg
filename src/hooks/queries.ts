@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 import * as api from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -31,6 +32,18 @@ export function useCreatures(universeId: string | undefined) {
 
 export function useCreature(id: string | undefined) {
   return useQuery({ queryKey: keys.creature(id ?? ""), queryFn: () => api.getCreature(id!), enabled: !!id });
+}
+
+/**
+ * Pré-carrega a ficha ou o universo quando o usuário mostra intenção de abrir (hover, foco, toque),
+ * para a transição de página já encontrar os dados e não passar pela tela de carregamento.
+ */
+export function usePrefetch() {
+  const qc = useQueryClient();
+  return {
+    creature: useCallback((id: string) => void qc.prefetchQuery({ queryKey: keys.creature(id), queryFn: () => api.getCreature(id) }), [qc]),
+    universe: useCallback((id: string) => void qc.prefetchQuery({ queryKey: keys.universe(id), queryFn: () => api.getUniverse(id) }), [qc]),
+  };
 }
 
 export function useCreatureImages(creatureId: string | null | undefined) {

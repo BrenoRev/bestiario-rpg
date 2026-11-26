@@ -47,7 +47,7 @@ export function GlossaryDialog({ open, focus, onClose }: { open: boolean; focus:
                     <div
                       key={key}
                       id={`glossario-${key}`}
-                      className={cx("rounded-lg border px-4 py-3", key === focus && !query ? "border-wine-line bg-wine-soft/50" : "border-line bg-parchment/50")}
+                      className={cx("paper-surface border px-4 py-4", key === focus && !query ? "border-wine" : "border-line")}
                     >
                       <dt className="font-display text-lg leading-tight font-semibold text-ink">{e.term}</dt>
                       <dd className="mt-1 text-sm leading-relaxed text-ink-soft">

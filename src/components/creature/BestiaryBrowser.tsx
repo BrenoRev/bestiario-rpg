@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { useCreatures } from "../../hooks/queries";
 import { CREATURE_LIST_LIMIT } from "../../lib/api";
 import { CREATURE_TYPES, HABITATS, THREAT_LEVELS } from "../../lib/dnd";
-import { Button, EmptyState, ErrorState, Select } from "../ui";
+import { Button, cx, EmptyState, ErrorState, Select } from "../ui";
 import { CreatureCard, CreatureCardSkeleton } from "./CreatureCard";
 
 type Sort = "az" | "za" | "cr-asc" | "cr-desc" | "recent";
@@ -81,7 +81,7 @@ export function BestiaryBrowser({ universeId }: { universeId: string }) {
     <div>
       <div className="card mb-5 p-3">
         <div className="flex flex-col gap-2 sm:flex-row">
-          <div className="relative flex-1">
+          <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
             <input
               type="search"
@@ -92,11 +92,11 @@ export function BestiaryBrowser({ universeId }: { universeId: string }) {
               className="field h-10 pl-9"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex min-w-0 gap-2">
             <Button icon={<SlidersHorizontal className="size-4" />} onClick={() => setShowFilters((s) => !s)} aria-expanded={showFilters}>
               Filtros{activeFilters ? ` (${activeFilters})` : ""}
             </Button>
-            <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Ordenar" className="field h-10 w-auto cursor-pointer">
+            <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Ordenar" className="field h-10 min-w-0 flex-1 cursor-pointer sm:w-auto sm:flex-none">
               <option value="az">Nome (A–Z)</option>
               <option value="za">Nome (Z–A)</option>
               <option value="cr-asc">ND crescente</option>
@@ -146,7 +146,7 @@ export function BestiaryBrowser({ universeId }: { universeId: string }) {
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+      <div className={cx("grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4", !isLoading && "stagger")}>
         {isLoading
           ? Array.from({ length: 6 }, (_, i) => <CreatureCardSkeleton key={i} />)
           : filtered.map((c) => <CreatureCard key={c.id} creature={c} />)}

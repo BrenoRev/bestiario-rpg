@@ -21,6 +21,8 @@ Plataforma web para mestres de RPG criarem e organizarem bestiários por univers
 
 ## Arquitetura
 
+A identidade visual segue o **Códice Vivo**: navegação escura, fichas e formulários em pergaminho, ações douradas e acento lilás nos recursos de IA. A referência fornecida está em [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md), e os tokens ficam em `src/index.css`. O documento de referência descreve um protótipo visual; a aplicação mantém autenticação, dados e IA reais. A imagem de abertura foi fornecida pelo usuário e está em `public/login-campaign.png`.
+
 | Camada | Tecnologia |
 |---|---|
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, React Router 7, TanStack Query, lucide-react |

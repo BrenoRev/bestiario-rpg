@@ -1,7 +1,6 @@
 import { Globe2, Plus, Sparkles } from "lucide-react";
 import { Link } from "react-router";
 import { BestiaryBrowser } from "../components/creature/BestiaryBrowser";
-import { UniverseSwitcher } from "../components/layout/Topbar";
 import { Button, EmptyState, PageHeader, PageLoader } from "../components/ui";
 import { useCurrentUniverse } from "../context/UniverseContext";
 
@@ -30,12 +29,9 @@ export function CreaturesPage() {
     <>
       <PageHeader
         eyebrow={
-          <span className="flex items-center gap-2">
+          <span>
             Bestiário de
-            <span className="md:hidden normal-case tracking-normal">
-              <UniverseSwitcher />
-            </span>
-            <Link to={`/mundos/${current.id}`} className="hidden md:inline normal-case tracking-normal text-wine hover:underline">
+            {" "}<Link to={`/mundos/${current.id}`} className="normal-case tracking-normal text-gold hover:underline">
               {current.name}
             </Link>
           </span>

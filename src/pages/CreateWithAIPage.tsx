@@ -2,7 +2,7 @@
 // mestre aceita, descarta, combina, modifica, pede variações ou ilustra.
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  BookPlus, Check, ChevronDown, ChevronUp, Combine, ExternalLink, GitBranch, Lightbulb, PenLine,
+  BookPlus, ChevronDown, ChevronUp, Combine, ExternalLink, GitBranch, Lightbulb, PenLine,
   RefreshCw, Sparkles, Wand2, X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -10,9 +10,10 @@ import { Link, useNavigate } from "react-router";
 import { AIAssistModal, CREATIVITY_OPTIONS, DETAIL_OPTIONS } from "../components/creature/AIAssist";
 import { ImageStudio } from "../components/creature/ImageStudio";
 import { CombineModal, type Proposal, VariationRequest } from "../components/creature/ProposalModals";
-import { Narrative, StatBlock } from "../components/creature/StatBlock";
+import { D20, WaxSeal } from "../components/brand";
+import { Narrative, StatBlock, StatBlockSkeleton } from "../components/creature/StatBlock";
 import { errorMessage, useToast } from "../components/Toast";
-import { Button, cx, EmptyState, PageHeader, PageLoader, Segmented, Select, TextArea, Toggle } from "../components/ui";
+import { ArcaneWait, Button, cx, EmptyState, PageHeader, PageLoader, Segmented, Select, TextArea, Toggle } from "../components/ui";
 import { useAuth } from "../context/AuthContext";
 import { useHelp } from "../context/HelpContext";
 import { useCurrentUniverse } from "../context/UniverseContext";
@@ -39,6 +40,9 @@ const EXAMPLES = [
   "Um guardião de pedra construído para proteger um templo submerso, já meio tomado por corais.",
   "Um predador das dunas que imita o som de água corrente para atrair caravanas.",
 ];
+
+const CREATING = ["Consultando os tomos antigos…", "Rolando os Dados de Vida…", "Equilibrando o Nível de Desafio…", "Afiando garras e presas…", "Escrevendo a crônica…"];
+const rollingD20 = <D20 className="size-4 animate-roll" />;
 
 const newKey = () => crypto.randomUUID();
 const storageKey = (uid: string) => `bestiario:criar:${uid}`;
@@ -241,27 +245,28 @@ export function CreateWithAIPage() {
   }
 
   const form = (
-    <section className="card p-5 sm:p-6">
+    <section className="card paper-surface parchment-form ai-creation-form">
+      <div className="mb-5 flex items-center gap-2 text-sm font-semibold text-wine"><Sparkles className="size-4 shrink-0" aria-hidden="true" /> Convide uma ideia. Escolha o que permanece.</div>
       <TextArea
         label="Descreva a criatura que você imagina"
         hint="Escreva com as suas palavras: aparência, onde vive, o que faz. Não precisa saber as regras do jogo."
         value={settings.description}
         onChange={(e) => set("description", e.target.value)}
         placeholder={EXAMPLES[0]}
-        className="min-h-36 text-[0.95rem]"
+        rows={5}
         maxLength={4000}
         disabled={generating}
       />
       <div className="mt-2 flex flex-wrap gap-1.5">
-        <span className="inline-flex items-center gap-1 text-xs text-muted">
-          <Lightbulb className="size-3.5" /> Exemplos:
+        <span className="inline-flex items-center gap-1 text-sm text-muted">
+          <Lightbulb className="size-4 shrink-0" aria-hidden="true" /> Exemplos:
         </span>
         {EXAMPLES.slice(1).map((ex) => (
           <button
             key={ex}
             type="button"
             onClick={() => set("description", ex)}
-            className="max-w-xs truncate rounded-full border border-line bg-parchment px-2.5 py-0.5 text-xs text-ink-soft hover:border-wine-line hover:text-wine cursor-pointer"
+            className="form-choice min-h-11 min-w-0 max-w-full truncate rounded-[var(--radius-ui)] px-3 py-2 text-base transition-colors cursor-pointer sm:max-w-xs"
             title={ex}
           >
             {ex}
@@ -269,7 +274,7 @@ export function CreateWithAIPage() {
         ))}
       </div>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-5 grid items-end gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Select label="Universo" value={universeId} onChange={(e) => setCurrentId(e.target.value)} disabled={generating}>
           {universes.map((u) => (
             <option key={u.id} value={u.id}>
@@ -299,36 +304,43 @@ export function CreateWithAIPage() {
           <option value="3">3 propostas</option>
         </Select>
       </div>
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
+      <div className="mt-4 grid gap-4 xl:grid-cols-2">
         <Segmented label="Nível de criatividade" help="criatividade" value={settings.creativity} onChange={(v) => set("creativity", v)} options={CREATIVITY_OPTIONS} />
         <Segmented label="Nível de detalhamento" help="detalhamento" value={settings.detail} onChange={(v) => set("detail", v)} options={DETAIL_OPTIONS} />
       </div>
       <div className="mt-5 flex flex-col gap-4 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <Toggle
-          checked={settings.useContext}
-          onChange={(v) => set("useContext", v)}
-          label={`Usar contexto de “${current.name}”`}
-          help="contextoUniverso"
-          description="Ambientação, época, nível de fantasia e regras do universo."
-        />
-        <Button variant="primary" icon={<Sparkles className="size-4" />} onClick={() => generate("replace")} loading={generating} className="h-11 px-6">
+        <div className="min-w-0 rounded-[var(--radius-ui)] bg-page-light/85 px-3 py-2 [overflow-wrap:anywhere]">
+          <Toggle
+            checked={settings.useContext}
+            onChange={(v) => set("useContext", v)}
+            label={`Usar contexto de “${current.name}”`}
+            help="contextoUniverso"
+            description="Ambientação, época, nível de fantasia e regras do universo."
+          />
+        </div>
+        <Button
+          variant="primary"
+          icon={<D20 className="size-4" />}
+          busyIcon={rollingD20}
+          onClick={() => generate("replace")}
+          loading={generating}
+          className="min-h-11 shrink-0 px-6"
+        >
           {generating ? "Gerando sugestões…" : "Gerar sugestões"}
         </Button>
       </div>
-      {generating && (
-        <p className="mt-3 flex items-center gap-2 rounded-lg bg-parchment px-3 py-2 text-xs text-muted">
-          <Sparkles className="size-4 animate-pulse text-wine" />
-          A IA está concebendo {settings.count > 1 ? `${settings.count} propostas` : "a proposta"} e equilibrando as estatísticas. Isso pode levar até um minuto.
-        </p>
-      )}
     </section>
   );
 
+  // Espera da geração com o pedido aberto: ficha em branco com o círculo rúnico por cima.
+  const waitingSheet = generating && (formOpen || proposals.length === 0);
+  const waitNote = `A IA está concebendo ${settings.count > 1 ? `${settings.count} propostas` : "a proposta"}. Isso pode levar até um minuto.`;
+
   return (
-    <>
+    <div className="arcane-surface">
       <PageHeader
         eyebrow={`Universo: ${current.name}`}
-        title="Criar com IA"
+        title="Forja de criaturas"
         description="Descreva sua ideia. A IA propõe fichas de D&D 5e que você pode aceitar, descartar, combinar ou modificar. Nada entra no bestiário sem sua confirmação."
       />
 
@@ -341,7 +353,7 @@ export function CreateWithAIPage() {
             <Button size="sm" icon={<ChevronDown className="size-4" />} onClick={() => setFormOpen(true)}>
               Editar pedido
             </Button>
-            <Button size="sm" variant="subtle" icon={<RefreshCw className="size-4" />} onClick={() => generate("more")} loading={generating}>
+            <Button size="sm" variant="subtle" icon={<RefreshCw className="size-4" />} busyIcon={rollingD20} onClick={() => generate("more")} loading={generating}>
               Gerar novas alternativas
             </Button>
           </div>
@@ -360,13 +372,30 @@ export function CreateWithAIPage() {
         </div>
       )}
 
-      {generating && proposals.length > 0 && !formOpen && (
-        <p className="mb-4 flex items-center gap-2 rounded-lg border border-line bg-parchment px-3 py-2 text-xs text-muted">
-          <Sparkles className="size-4 animate-pulse text-wine" /> Gerando novas alternativas…
-        </p>
+      {waitingSheet && (
+        <div className="animate-fade-in mb-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
+          <div className="relative">
+            <StatBlockSkeleton />
+            <div className="absolute inset-0 flex items-center justify-center rounded-[var(--radius-card)] bg-cream/70 px-4 backdrop-blur-[1px]">
+              <ArcaneWait phrases={CREATING} note={waitNote} />
+            </div>
+          </div>
+          <div className="card hidden overflow-hidden xl:block" aria-hidden>
+            <div className="skeleton aspect-square" />
+          </div>
+        </div>
       )}
 
-      {proposal && (
+      {generating && proposals.length > 0 && !formOpen && (
+        <ArcaneWait
+          size="sm"
+          className="animate-fade-in card mb-4 px-4 py-3"
+          phrases={["Gerando novas alternativas…", ...CREATING]}
+          note="Isso pode levar até um minuto."
+        />
+      )}
+
+      {proposal && !waitingSheet && (
         <div className="animate-fade-in">
           {/* Abas das propostas */}
           <div className="mb-4 flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Propostas da IA">
@@ -379,7 +408,7 @@ export function CreateWithAIPage() {
                 )}
               >
                 <button role="tab" aria-selected={i === active} onClick={() => setActive(i)} className="flex items-center gap-1.5 py-1.5 pl-3 pr-1.5 cursor-pointer">
-                  {p.savedId && <Check className="size-3.5 text-moss" />}
+                  {p.savedId && <WaxSeal label="Salva no bestiário" className="size-4" />}
                   <span className="max-w-48 truncate">{p.creature.name || `Proposta ${i + 1}`}</span>
                 </button>
                 <button
@@ -415,7 +444,7 @@ export function CreateWithAIPage() {
                   Salvar no bestiário
                 </Button>
               )}
-              <Button icon={<RefreshCw className="size-4" />} onClick={() => generate("more")} loading={generating}>
+              <Button icon={<RefreshCw className="size-4" />} busyIcon={rollingD20} onClick={() => generate("more")} loading={generating}>
                 Novas alternativas
               </Button>
               <Button icon={<Wand2 className="size-4" />} onClick={() => setModal("modify")}>
@@ -443,8 +472,9 @@ export function CreateWithAIPage() {
             )}
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
-            <div className="space-y-6">
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
+            {/* key: ao trocar de proposta, a ficha nova entra com a revelação. */}
+            <div key={proposal.key} className="space-y-6">
               <StatBlock creature={proposal.creature} />
               <Narrative creature={proposal.creature} showNotes={false} />
             </div>
@@ -495,7 +525,7 @@ export function CreateWithAIPage() {
           />
         </>
       )}
-    </>
+    </div>
   );
 }
 

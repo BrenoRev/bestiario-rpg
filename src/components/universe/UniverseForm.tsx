@@ -1,7 +1,7 @@
-import { ImagePlus, Trash2 } from "lucide-react";
+import { BookOpen, Castle, Hourglass, ImagePlus, Paintbrush, Sprout, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { UniverseInput } from "../../lib/types";
-import { StoredImage } from "../brand";
+import { D20, StoredImage } from "../brand";
 import { Button, Segmented, TextArea, TextInput } from "../ui";
 
 export const GENRE_SUGGESTIONS = [
@@ -37,8 +37,8 @@ export function UniverseForm({ value, onChange, coverFile, onCoverFile }: Props)
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <div className="space-y-5">
-        <section className="card space-y-4 p-5 sm:p-6">
+      <div className="min-w-0 space-y-5">
+        <section className="card paper-surface parchment-form space-y-4">
           <h2 className="section-title">Identidade</h2>
           <TextInput label="Nome do universo" required maxLength={120} value={value.name} onChange={(e) => set("name", e.target.value)} placeholder="Ex.: Reinos de Cinzaprata" />
           <div>
@@ -52,23 +52,24 @@ export function UniverseForm({ value, onChange, coverFile, onCoverFile }: Props)
           <TextArea label="Descrição geral" value={value.description} onChange={(e) => set("description", e.target.value)} placeholder="Do que trata este mundo? Qual o tom da campanha?" />
         </section>
 
-        <section className="card space-y-4 p-5 sm:p-6">
+        <section className="card paper-surface parchment-form space-y-4">
           <h2 className="section-title">Ambientação</h2>
           <TextArea label="Ambientação" value={value.setting} onChange={(e) => set("setting", e.target.value)} placeholder="Geografia, culturas, conflitos, atmosfera…" />
-          <TextInput label="Época ou período histórico" value={value.era} onChange={(e) => set("era", e.target.value)} placeholder="Ex.: Era das Cinzas, 300 anos após a Queda" />
+          <TextInput label="Época ou período histórico" icon={<Hourglass className="size-5" />} value={value.era} onChange={(e) => set("era", e.target.value)} placeholder="Ex.: Era das Cinzas, 300 anos após a Queda" />
           <Segmented
             label="Nível de fantasia"
             help="nivelFantasia"
             value={value.fantasy_level}
             onChange={(v) => set("fantasy_level", v)}
             options={[
-              { value: "baixo", label: "Baixo", hint: "Magia rara e sutil" },
-              { value: "medio", label: "Médio", hint: "Magia presente, mas não onipresente" },
-              { value: "alto", label: "Alto", hint: "Magia abundante" },
+              { value: "baixo", label: "Baixo", hint: "Magia rara e sutil", icon: <Sprout className="size-4.5" /> },
+              { value: "medio", label: "Médio", hint: "Magia presente, mas não onipresente", icon: <D20 className="size-4.5" /> },
+              { value: "alto", label: "Alto", hint: "Magia abundante", icon: <Castle className="size-4.5" /> },
             ]}
           />
           <TextArea
             label="Regras ou características particulares"
+            icon={<BookOpen className="size-5" />}
             help="regrasUniverso"
             value={value.rules}
             onChange={(e) => set("rules", e.target.value)}
@@ -76,6 +77,7 @@ export function UniverseForm({ value, onChange, coverFile, onCoverFile }: Props)
           />
           <TextArea
             label="Estilo visual das ilustrações"
+            icon={<Paintbrush className="size-5" />}
             help="estiloVisual"
             value={value.art_style}
             onChange={(e) => set("art_style", e.target.value)}
@@ -87,7 +89,7 @@ export function UniverseForm({ value, onChange, coverFile, onCoverFile }: Props)
         <p className="text-xs text-muted">Essas informações servem de contexto para a IA ao criar e adaptar criaturas deste universo.</p>
       </div>
 
-      <aside className="space-y-3">
+      <aside className="min-w-0 space-y-3">
         <span className="label">Imagem de capa (opcional)</span>
         <div className="card overflow-hidden">
           <div className="aspect-[16/10] border-b border-line">

@@ -1,12 +1,13 @@
 // Modais de "Criar com IA": pedir variação de uma proposta e combinar campos entre propostas.
-import { Combine, GitBranch, Sparkles } from "lucide-react";
+import { Combine, GitBranch } from "lucide-react";
 import { useEffect, useState } from "react";
 import { generateVariations } from "../../lib/ai";
 import { applyFields, diffCreatures } from "../../lib/creature";
 import type { AIAlternative, CreatureDraft, CreatureImage, Creativity, Detail } from "../../lib/types";
 import { Modal } from "../Modal";
 import { errorMessage, useToast } from "../Toast";
-import { Badge, Button, Select, TextArea } from "../ui";
+import { D20 } from "../brand";
+import { ArcaneWait, Badge, Button, Select, TextArea } from "../ui";
 import { DiffReview } from "./AIAssist";
 
 /** Uma proposta da IA na sessão de criação (ainda não salva, ou já salva com `savedId`). */
@@ -78,7 +79,7 @@ export function VariationRequest({
           <Button onClick={onClose} disabled={loading}>
             Cancelar
           </Button>
-          <Button variant="primary" icon={<GitBranch className="size-4" />} onClick={run} loading={loading}>
+          <Button variant="primary" icon={<GitBranch className="size-4" />} busyIcon={<D20 className="size-4 animate-roll" />} onClick={run} loading={loading}>
             {loading ? "Criando…" : "Criar variação"}
           </Button>
         </>
@@ -98,9 +99,12 @@ export function VariationRequest({
           <option value="3">3 variações</option>
         </Select>
         {loading && (
-          <p className="flex items-center gap-2 rounded-lg bg-parchment px-3 py-2 text-xs text-muted">
-            <Sparkles className="size-4 animate-pulse text-wine" /> Criando a variação…
-          </p>
+          <ArcaneWait
+            size="sm"
+            className="animate-fade-in rounded-lg bg-parchment px-3 py-2.5"
+            phrases={["Criando a variação…", "Cruzando linhagens…", "Ajustando o Nível de Desafio…"]}
+            note="Pode levar até um minuto."
+          />
         )}
       </div>
     </Modal>
