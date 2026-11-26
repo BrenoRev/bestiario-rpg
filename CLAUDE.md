@@ -87,6 +87,7 @@ supabase/
   functions/        _shared/ (auth, http, claude, esquema da ficha) + uma pasta por função
   config.toml       ambiente local
 vercel.json         deploy do frontend (reescrita SPA, cabeçalhos, cache)
+docs/prints/        prints das telas usados no README (JPEG, refaça quando a tela mudar)
 ```
 
 ## Onde está o modelo (copie daqui)
